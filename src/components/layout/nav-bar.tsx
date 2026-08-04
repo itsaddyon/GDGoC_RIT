@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { NAV_LINKS, SITE } from "@/data/nav";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { GDGMark } from "@/components/ui/gdg-mark";
+import { useAuth } from "@/contexts/auth-context";
 
 export function NavBar() {
   const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
     <motion.header
@@ -19,23 +22,19 @@ export function NavBar() {
       className="sticky top-0 z-50 border-b border-border/70 bg-background/65 backdrop-blur-md"
     >
       <div className="container-shell flex h-16 items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-3 font-medium">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 font-medium">
             <GDGMark size={30} />
             <span className="flex flex-col leading-[1.1]">
-              <span className="text-[14px] tracking-tight">{SITE.shortName}</span>
-              <span className="text-[11px] text-muted">{SITE.chapter}</span>
+              <span className="text-[13px] sm:text-[14px] tracking-tight">{SITE.shortName}</span>
+              <span className="text-[10px] sm:text-[11px] text-muted hidden sm:block">{SITE.chapter}</span>
             </span>
           </Link>
           
-          <div className="h-8 w-px bg-border/70 hidden sm:block" aria-hidden="true" />
+          <div className="h-6 sm:h-8 w-px bg-border/70" aria-hidden="true" />
           
-          <Link href="https://ritroorkee.com" target="_blank" rel="noopener noreferrer" className="hidden sm:block">
-            <img 
-              src="/rit-logo.png" 
-              alt="RIT Roorkee Logo" 
-              className="h-8 w-auto object-contain"
-            />
+          <Link href="https://ritroorkee.com" target="_blank" rel="noopener noreferrer" className="flex items-center shrink-0">
+            <Image src="/rit-logo.png" alt="RIT Roorkee Logo" width={300} height={100} className="h-7 w-auto sm:h-8 object-contain" priority />
           </Link>
         </div>
 
@@ -53,29 +52,50 @@ export function NavBar() {
 
         <div className="hidden items-center gap-3 md:flex">
           <ThemeToggle />
+          {user ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium">Hey, {user.displayName?.split(" ")[0] || "User"}!</span>
+              <button onClick={logout} className="text-xs text-muted hover:text-accent-red transition-colors">Sign out</button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="text-sm text-muted transition-colors hover:text-foreground"
+            >
+              Log in
+            </Link>
+          )}
           <Link
-            href="/login"
-            className="text-sm text-muted transition-colors hover:text-foreground"
-          >
-            Log in
-          </Link>
-          <Link
-            href="/register"
+            href="https://gdg.community.dev/gdg-on-campus-roorkee-institute-of-technology-roorkee-india/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-transform hover:scale-[1.03] active:scale-[0.98]"
           >
             Join us
           </Link>
         </div>
 
-        <button
-          type="button"
-          aria-label="Toggle menu"
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground md:hidden"
-        >
-          {open ? <X size={18} /> : <Menu size={18} />}
-        </button>
+        <div className="flex items-center gap-3 md:hidden">
+          {user ? (
+            <span className="text-sm font-medium">Hey, {user.displayName?.split(" ")[0]}</span>
+          ) : (
+            <Link
+              href="/login"
+              className="text-sm font-medium text-muted transition-colors hover:text-foreground"
+            >
+              Log in
+            </Link>
+          )}
+          <button
+            type="button"
+            aria-label="Toggle menu"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground"
+          >
+            {open ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
       </div>
 
       {open && (
@@ -98,13 +118,19 @@ export function NavBar() {
             ))}
             <div className="mt-2 flex items-center gap-3 px-3">
               <ThemeToggle />
-              <Link href="/login" className="text-sm text-muted">Log in</Link>
+              {user ? (
+                <button onClick={logout} className="text-sm text-muted text-left">Sign out</button>
+              ) : (
+                <Link href="/login" className="text-sm text-muted">Log in</Link>
+              )}
               <Link
-                href="/register"
-                className="ml-auto rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background"
-              >
-                Join us
-              </Link>
+              href="https://gdg.community.dev/gdg-on-campus-roorkee-institute-of-technology-roorkee-india/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-9 items-center justify-center rounded-full bg-foreground px-5 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
+            >
+              Join us
+            </Link>
             </div>
           </nav>
         </motion.div>

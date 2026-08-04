@@ -9,7 +9,19 @@ export function Preloader() {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setDone(true), 2000); // Increased time slightly to let animation play
+    // Check if we've already shown the preloader in this session
+    const hasLoadedBefore = sessionStorage.getItem("hasLoadedBefore");
+    
+    if (hasLoadedBefore) {
+      setDone(true);
+      return;
+    }
+
+    const t = setTimeout(() => {
+      sessionStorage.setItem("hasLoadedBefore", "true");
+      setDone(true);
+    }, 2000); // Increased time slightly to let animation play
+    
     return () => clearTimeout(t);
   }, []);
 

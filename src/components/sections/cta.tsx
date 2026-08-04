@@ -34,7 +34,9 @@ export function Cta() {
           className="mt-8"
         >
           <Link
-            href="/register"
+            href="https://gdg.community.dev/gdg-on-campus-roorkee-institute-of-technology-roorkee-india/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="group inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-transform hover:scale-[1.03] active:scale-[0.98]"
           >
             Join the community

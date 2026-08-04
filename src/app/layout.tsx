@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { Outfit, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/layout/theme-provider";
+import { AuthProvider } from "@/contexts/auth-context";
 import { SiteCursor } from "@/components/layout/site-cursor";
 import { NetworkCanvas } from "@/components/illustrations/network-canvas";
+import { ConditionalNav } from "@/components/layout/conditional-nav";
 
 const outfitFont = Outfit({
   variable: "--font-outfit",
@@ -16,6 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: {
     default: "GDG on Campus RIT Roorkee",
     template: "%s · GDG on Campus RIT Roorkee",
@@ -57,12 +60,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${outfitFont.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground cursor-none">
-        <ThemeProvider>
-          <NetworkCanvas />
-          <SiteCursor />
-          {children}
-        </ThemeProvider>
+      <body className="min-h-full flex flex-col bg-background text-foreground md:cursor-none">
+        <AuthProvider>
+          <ThemeProvider>
+            <NetworkCanvas />
+            <SiteCursor />
+            <ConditionalNav />
+            {children}
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

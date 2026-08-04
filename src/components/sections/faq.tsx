@@ -30,14 +30,14 @@ export function Faq() {
           {FAQS.map((f, i) => {
             const isOpen = openIndex === i;
             return (
-              <div key={f.q}>
+              <div key={f.question}>
                 <button
                   type="button"
                   onClick={() => setOpenIndex(isOpen ? null : i)}
                   aria-expanded={isOpen}
                   className="flex w-full items-center justify-between gap-6 py-5 text-left"
                 >
-                  <span className="text-sm font-medium sm:text-base">{f.q}</span>
+                  <span className="text-sm font-medium sm:text-base">{f.question}</span>
                   <motion.span
                     animate={{ rotate: isOpen ? 45 : 0 }}
                     transition={{ duration: 0.25, ease: "easeOut" }}
@@ -55,7 +55,7 @@ export function Faq() {
                       transition={{ duration: 0.3, ease: "easeOut" }}
                       className="overflow-hidden"
                     >
-                      <p className="pb-5 text-sm leading-relaxed text-muted">{f.a}</p>
+                      <p className="pb-5 text-sm leading-relaxed text-muted">{f.answer}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>

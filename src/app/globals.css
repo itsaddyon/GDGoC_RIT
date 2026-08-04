@@ -60,8 +60,8 @@ body {
   transition: background 0.4s, color 0.4s;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  body, a, button {
+@media (min-width: 768px) {
+  * {
     cursor: none !important;
   }
 }
@@ -181,4 +181,21 @@ body {
 .noise-overlay {
   background-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.04) 0, transparent 1px);
   background-size: 5px 5px;
+}
+
+/* 3D Transform Utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
 }
