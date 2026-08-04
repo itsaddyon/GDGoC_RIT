@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { PEOPLE } from "@/data/content";
-import { Github, Linkedin, Twitter } from "lucide-react";
 
 // SVG Icons
 const GithubIcon = ({ size = 20 }) => (
