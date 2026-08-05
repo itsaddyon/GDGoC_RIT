@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/auth-context";
 
 export function NavBar() {
   const [open, setOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, userProfile, logout } = useAuth();
 
   return (
     <motion.header
@@ -22,19 +22,19 @@ export function NavBar() {
       className="sticky top-0 z-50 border-b border-border/70 bg-background/65 backdrop-blur-md"
     >
       <div className="container-shell flex h-16 items-center justify-between">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <Link href="/" className="flex items-center gap-2 sm:gap-3 font-medium">
-            <GDGMark size={30} />
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <Link href="/" className="flex items-center gap-1.5 sm:gap-3 font-medium shrink-0">
+            <GDGMark size={24} className="sm:w-[30px] sm:h-[30px]" />
             <span className="flex flex-col leading-[1.1]">
-              <span className="text-[13px] sm:text-[14px] tracking-tight">{SITE.shortName}</span>
+              <span className="text-[12px] sm:text-[14px] tracking-tight">{SITE.shortName}</span>
               <span className="text-[10px] sm:text-[11px] text-muted hidden sm:block">{SITE.chapter}</span>
             </span>
           </Link>
           
-          <div className="h-6 sm:h-8 w-px bg-border/70" aria-hidden="true" />
+          <div className="h-5 sm:h-8 w-px bg-border/70 shrink-0" aria-hidden="true" />
           
-          <Link href="https://ritroorkee.com" target="_blank" rel="noopener noreferrer" className="flex items-center shrink-0">
-            <Image src="/rit-logo.png" alt="RIT Roorkee Logo" width={300} height={100} className="h-7 w-auto sm:h-8 object-contain" priority />
+          <Link href="https://ritroorkee.com" target="_blank" rel="noopener noreferrer" className="flex items-center shrink min-w-0">
+            <Image src="/rit-logo.png" alt="RIT Roorkee Logo" width={300} height={100} className="h-5 w-auto sm:h-8 object-contain" priority />
           </Link>
         </div>
 
@@ -53,8 +53,14 @@ export function NavBar() {
         <div className="hidden items-center gap-3 md:flex">
           <ThemeToggle />
           {user ? (
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium">Hey, {user.displayName?.split(" ")[0] || "User"}!</span>
+            <div className="flex items-center gap-4">
+              <Link 
+                href="/profile" 
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-background font-bold hover:scale-105 transition-transform"
+                title="View Profile"
+              >
+                {(userProfile?.name || user.displayName || "U")[0].toUpperCase()}
+              </Link>
               <button onClick={logout} className="text-xs text-muted hover:text-accent-red transition-colors">Sign out</button>
             </div>
           ) : (
@@ -75,13 +81,18 @@ export function NavBar() {
           </Link>
         </div>
 
-        <div className="flex items-center gap-3 md:hidden">
+        <div className="flex items-center gap-3 md:hidden shrink-0">
           {user ? (
-            <span className="text-sm font-medium">Hey, {user.displayName?.split(" ")[0]}</span>
+            <Link 
+              href="/profile" 
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background font-bold text-xs"
+            >
+              {(userProfile?.name || user.displayName || "U")[0].toUpperCase()}
+            </Link>
           ) : (
             <Link
               href="/login"
-              className="text-sm font-medium text-muted transition-colors hover:text-foreground"
+              className="text-[13px] font-medium text-muted transition-colors hover:text-foreground whitespace-nowrap"
             >
               Log in
             </Link>
@@ -119,7 +130,10 @@ export function NavBar() {
             <div className="mt-2 flex items-center gap-3 px-3">
               <ThemeToggle />
               {user ? (
-                <button onClick={logout} className="text-sm text-muted text-left">Sign out</button>
+                <>
+                  <Link href="/profile" onClick={() => setOpen(false)} className="text-sm font-medium hover:text-accent-blue">Profile</Link>
+                  <button onClick={() => { logout(); setOpen(false); }} className="text-sm text-muted text-left hover:text-accent-red">Sign out</button>
+                </>
               ) : (
                 <Link href="/login" className="text-sm text-muted">Log in</Link>
               )}

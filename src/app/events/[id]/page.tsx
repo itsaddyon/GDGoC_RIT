@@ -5,7 +5,6 @@ import { useAuth } from "@/contexts/auth-context";
 import { PageHeader } from "@/components/ui/page-header";
 import { Footer } from "@/components/layout/footer";
 import { useParams, useRouter } from "next/navigation";
-import { EVENTS } from "@/data/content";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -21,15 +20,24 @@ export default function EventDetailsPage() {
 
   useEffect(() => {
     if (id) {
-      const found = EVENTS.find(e => e.id === id);
-      if (found) setEventData(found);
+      const fetchEvent = async () => {
+        try {
+          const snap = await getDoc(doc(db, "events", id as string));
+          if (snap.exists()) {
+            setEventData({ id: snap.id, ...snap.data() });
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      fetchEvent();
     }
   }, [id]);
 
   useEffect(() => {
     const checkRegistration = async () => {
       if (user && eventData) {
-        const regRef = doc(db, "event_registrations", `${eventData.id}_${user.uid}`);
+        const regRef = doc(db, `registrations_${eventData.id}`, user.uid);
         const regSnap = await getDoc(regRef);
         if (regSnap.exists()) {
           setIsRegistered(true);
@@ -39,30 +47,12 @@ export default function EventDetailsPage() {
     checkRegistration();
   }, [user, eventData]);
 
-  const handleRegister = async () => {
+  const handleRegister = () => {
     if (!user) {
-      alert("You must log in to register for an event!");
-      router.push("/login");
+      router.push(`/login?redirect=/events/${eventData.id}/register`);
       return;
     }
-    
-    setIsRegistering(true);
-    try {
-      const regId = `${eventData.id}_${user.uid}`;
-      await setDoc(doc(db, "event_registrations", regId), {
-        eventId: eventData.id,
-        eventTitle: eventData.title,
-        userId: user.uid,
-        registeredAt: new Date().toISOString(),
-      });
-      setIsRegistered(true);
-      alert(`Successfully registered for ${eventData.title}!`);
-    } catch (error) {
-      console.error("Error registering:", error);
-      alert("Registration failed. Please try again.");
-    } finally {
-      setIsRegistering(false);
-    }
+    router.push(`/events/${eventData.id}/register`);
   };
 
   if (!eventData) return <div className="p-20 text-center">Loading...</div>;

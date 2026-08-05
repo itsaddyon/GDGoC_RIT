@@ -6,6 +6,7 @@ import { About } from "@/components/sections/about";
 import { Domains } from "@/components/sections/domains";
 import { Achievements } from "@/components/sections/achievements";
 import { UpcomingEvents } from "@/components/sections/upcoming-events";
+import { Gallery } from "@/components/sections/gallery";
 import { People } from "@/components/sections/people";
 import { Faq } from "@/components/sections/faq";
 import { Cta } from "@/components/sections/cta";
@@ -21,6 +22,7 @@ export default function Home() {
         <Domains />
         <Achievements />
         <UpcomingEvents />
+        <Gallery />
         <People />
         <Faq />
         <Cta />

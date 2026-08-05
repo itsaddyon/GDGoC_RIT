@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 // SVG Icons
 const GithubIcon = ({ size = 20 }) => (
@@ -12,6 +14,9 @@ const LinkedinIcon = ({ size = 20 }) => (
 );
 const TwitterIcon = ({ size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path></svg>
+);
+const InstagramIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
 );
 
 type TeamMember = {
@@ -29,59 +34,75 @@ type TeamMember = {
 };
 
 const TEAM_DATA: TeamMember[] = [
+  // Current Team
   {
-    id: "1",
-    name: "John Doe",
-    role: "GDG Organizer",
-    category: "current",
-    domain: "Core",
-    img: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&q=80&w=400",
-    socials: { github: "#", linkedin: "#", twitter: "#" }
+    id: "1", name: "Akshita Jain", role: "GDG Lead & Event Manager", category: "current", domain: "Core",
+    img: "/team/akshita-jain.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
   },
   {
-    id: "2",
-    name: "Jane Smith",
-    role: "Tech Lead",
-    category: "current",
-    domain: "Tech",
-    img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=400",
-    socials: { github: "#", linkedin: "#" }
+    id: "2", name: "Arpit Pandey", role: "Event Manager", category: "current", domain: "Management",
+    img: "/team/arpit-pandey.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
   },
   {
-    id: "3",
-    name: "Alex Johnson",
-    role: "Design Lead",
-    category: "current",
-    domain: "Design",
-    img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400",
-    socials: { linkedin: "#", twitter: "#" }
+    id: "3", name: "Ansh Dixit", role: "Social Media Lead", category: "current", domain: "PR",
+    img: "/team/ansh-dixit.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
   },
   {
-    id: "4",
-    name: "Sarah Williams",
-    role: "Former Organizer",
-    category: "founding",
-    domain: "Core",
-    img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=400",
-    socials: { linkedin: "#" }
+    id: "4", name: "Aditi Jaiswal", role: "Social Media Lead", category: "current", domain: "PR",
+    img: "/team/aditi-jaiswal.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
   },
   {
-    id: "5",
-    name: "Michael Brown",
-    role: "PR Head",
-    category: "current",
-    domain: "PR",
-    img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400",
-    socials: { linkedin: "#", twitter: "#" }
+    id: "5", name: "Aditya Raj", role: "Tech Lead", category: "current", domain: "Tech",
+    img: "/team/aditya-raj.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
   },
   {
-    id: "6",
-    name: "Emily Davis",
-    role: "Management Lead",
-    category: "current",
-    domain: "Management",
-    img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
-    socials: { linkedin: "#" }
+    id: "6", name: "Adarsh Arya", role: "Tech Lead", category: "current", domain: "Tech",
+    img: "/team/adarsh-arya.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
+  },
+  {
+    id: "7", name: "Vaishnavi Pandey", role: "Social Media Lead", category: "current", domain: "PR",
+    img: "/team/vaishnavi-pandey.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
+  },
+  {
+    id: "8", name: "Arpit Panwar", role: "Tech Lead", category: "current", domain: "Tech",
+    img: "/team/arpit-panwar.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
+  },
+  {
+    id: "9", name: "Shaurya Hindocha", role: "PR & Outreach", category: "current", domain: "PR",
+    img: "/team/shaurya-hindocha.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
+  },
+  // Founding Team
+  {
+    id: "f1", name: "Aditya Raj", role: "GDG Lead", category: "founding", domain: "Core",
+    img: "/team/aditya-raj.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
+  },
+  {
+    id: "f2", name: "Ashwani Raj", role: "Core Team", category: "founding", domain: "Core",
+    img: "/team/ashwani-raj.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
+  },
+  {
+    id: "f3", name: "Harsh Raj Shukla", role: "Core Team", category: "founding", domain: "Core",
+    img: "/team/harsh-raj-shukla.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
+  },
+  {
+    id: "f4", name: "Priyanshu Raushan", role: "Core Team", category: "founding", domain: "Core",
+    img: "/team/priyanshu-raushan.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
+  },
+  {
+    id: "f5", name: "Akshita Jain", role: "Core Team", category: "founding", domain: "Core",
+    img: "/team/akshita-jain.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
+  },
+  {
+    id: "f6", name: "Ansh Dixit", role: "Core Team", category: "founding", domain: "Core",
+    img: "/team/ansh-dixit.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
+  },
+  {
+    id: "f7", name: "Adarsh Arya", role: "Core Team", category: "founding", domain: "Core",
+    img: "/team/adarsh-arya.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
+  },
+  {
+    id: "f8", name: "Arpit Panwar", role: "Core Team", category: "founding", domain: "Core",
+    img: "/team/arpit-panwar.jpg", socials: { github: "https://github.com", linkedin: "https://linkedin.com" }
   }
 ];
 
@@ -91,6 +112,32 @@ export function TeamGrid() {
   
   // State to track which card is currently flipped
   const [flippedCardId, setFlippedCardId] = useState<string | null>(null);
+  const [socialLinks, setSocialLinks] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    const fetchSocials = async () => {
+      try {
+        const q = query(collection(db, "users"), where("role", "in", ["admin", "core"]));
+        const snap = await getDocs(q);
+        const links: Record<string, any> = {};
+        snap.forEach(doc => {
+          const data = doc.data();
+          if (data.name) {
+            links[data.name.toLowerCase()] = {
+              github: data.github,
+              linkedin: data.linkedin,
+              twitter: data.twitter,
+              instagram: data.instagram
+            };
+          }
+        });
+        setSocialLinks(links);
+      } catch (error) {
+        console.error("Failed to fetch social links", error);
+      }
+    };
+    fetchSocials();
+  }, []);
 
   const domains = ["All", "Core", "Tech", "Design", "Management", "PR"];
 
@@ -200,19 +247,20 @@ export function TeamGrid() {
                   <p className="mt-1 text-sm font-medium text-muted">{member.role}</p>
                   
                   <div className="flex gap-4 mt-6">
-                    {member.socials.github && (
-                      <a href={member.socials.github} target="_blank" rel="noreferrer" className="text-muted hover:text-foreground transition-colors" onClick={(e) => e.stopPropagation()}>
-                        <GithubIcon size={20} />
-                      </a>
-                    )}
-                    {member.socials.linkedin && (
-                      <a href={member.socials.linkedin} target="_blank" rel="noreferrer" className="text-muted hover:text-accent-blue transition-colors" onClick={(e) => e.stopPropagation()}>
-                        <LinkedinIcon size={20} />
-                      </a>
-                    )}
-                    {member.socials.twitter && (
-                      <a href={member.socials.twitter} target="_blank" rel="noreferrer" className="text-muted hover:text-accent-blue transition-colors" onClick={(e) => e.stopPropagation()}>
+                    <a href={socialLinks[member.name.toLowerCase()]?.github || member.socials.github} target="_blank" rel="noreferrer" className="text-muted hover:text-foreground transition-colors" onClick={(e) => e.stopPropagation()}>
+                      <GithubIcon size={20} />
+                    </a>
+                    <a href={socialLinks[member.name.toLowerCase()]?.linkedin || member.socials.linkedin} target="_blank" rel="noreferrer" className="text-muted hover:text-accent-blue transition-colors" onClick={(e) => e.stopPropagation()}>
+                      <LinkedinIcon size={20} />
+                    </a>
+                    {socialLinks[member.name.toLowerCase()]?.twitter && (
+                      <a href={socialLinks[member.name.toLowerCase()].twitter} target="_blank" rel="noreferrer" className="text-muted hover:text-accent-blue transition-colors" onClick={(e) => e.stopPropagation()}>
                         <TwitterIcon size={20} />
+                      </a>
+                    )}
+                    {socialLinks[member.name.toLowerCase()]?.instagram && (
+                      <a href={socialLinks[member.name.toLowerCase()].instagram} target="_blank" rel="noreferrer" className="text-muted hover:text-accent-red transition-colors" onClick={(e) => e.stopPropagation()}>
+                        <InstagramIcon size={20} />
                       </a>
                     )}
                   </div>

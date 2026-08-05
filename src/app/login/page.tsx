@@ -7,24 +7,26 @@ import { GDGMark } from "@/components/ui/gdg-mark";
 import { useState, useEffect } from "react";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 
 export default function LoginPage() {
   const [error, setError] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get("redirect");
   const { user, userProfile, loading } = useAuth();
 
   useEffect(() => {
     if (!loading && user) {
       if (userProfile) {
-        router.push("/");
+        router.push(redirectPath || "/");
       } else {
         router.push("/complete-profile");
       }
     }
-  }, [user, userProfile, loading, router]);
+  }, [user, userProfile, loading, router, redirectPath]);
 
   const handleGoogleSignIn = async () => {
     try {
