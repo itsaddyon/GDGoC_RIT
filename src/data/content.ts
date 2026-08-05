@@ -57,13 +57,59 @@ export const ACHIEVEMENTS = [
 
 export const EVENTS = [
   {
-    id: "antigravity",
-    title: "Exploring Antigravity: Hands-On Experiments",
-    date: "May 15, 2026",
-    type: "Workshop",
-    desc: "Join us for an exciting journey into the realm of advanced physics and experimental engineering at the \"Exploring Antigravity: Hands-On Experiments\" event! This hands-on workshop is designed to spark your curiosity and challenge your understanding of gravity, propulsion, and the limits of modern science.",
-    color: "var(--accent-blue)",
-  },
+  id: "antigravity",
+
+  title: "Exploring Antigravity: Hands-On Experiments",
+
+  date: "May 15, 2026",
+
+  type: "Workshop",
+
+  venue: "RIT Roorkee",
+
+  duration: "4 Hours",
+
+  participants: 180,
+
+  status: "Completed",
+
+  registrationOpen: false,
+
+  desc:
+    "Join us for an exciting journey into the realm of advanced physics and experimental engineering at the 'Exploring Antigravity' event. This hands-on workshop is designed to spark curiosity and challenge your understanding of gravity, propulsion, and modern science.",
+
+  color: "var(--accent-blue)",
+
+  banner: "/events/antigravity/banner.jpg",
+
+  gallery: [
+    "/events/antigravity/1.jpg",
+    "/events/antigravity/2.jpg",
+    "/events/antigravity/3.jpg",
+    "/events/antigravity/4.jpg",
+  ],
+
+  highlights: [
+    "Hands-on Experiments",
+    "Interactive Demonstrations",
+    "Certificates for Participants",
+    "Networking Session",
+  ],
+
+  learnings: [
+    "Experimental Physics",
+    "Scientific Thinking",
+    "Problem Solving",
+    "Team Collaboration",
+  ],
+
+  speakers: [
+    {
+      name: "GDGoC Core Team",
+      role: "Workshop Mentors",
+    },
+  ],
+},
   {
     id: "vibecon26",
     title: "VibeCon '26 x GDGoC RIT : The AI Creator Showcase",
