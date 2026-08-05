@@ -24,6 +24,16 @@ export default function ProfilePage() {
   const [twitter, setTwitter] = useState("");
   const [instagram, setInstagram] = useState("");
   const [isSavingSocial, setIsSavingSocial] = useState(false);
+  
+  const [isEditingAdmin, setIsEditingAdmin] = useState(false);
+  const [isSavingAdminEdit, setIsSavingAdminEdit] = useState(false);
+  const [adminFormData, setAdminFormData] = useState({
+    phone: "",
+    collegeEmail: "",
+    course: "",
+    branch: "",
+    year: ""
+  });
 
   useEffect(() => {
     if (userProfile) {
@@ -135,6 +145,34 @@ export default function ProfilePage() {
     }
   };
 
+  const startAdminEdit = () => {
+    setAdminFormData({
+      phone: userProfile.phone || "",
+      collegeEmail: userProfile.collegeEmail || "",
+      course: userProfile.course || "",
+      branch: userProfile.branch || "",
+      year: userProfile.year || ""
+    });
+    setIsEditingAdmin(true);
+  };
+
+  const handleAdminEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setIsSavingAdminEdit(true);
+    try {
+      await setDoc(doc(db, "users", user.uid), adminFormData, { merge: true });
+      await refreshProfile();
+      setIsEditingAdmin(false);
+      alert("Profile details updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile.");
+    } finally {
+      setIsSavingAdminEdit(false);
+    }
+  };
+
   if (loading || !user) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -173,24 +211,113 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-            <div>
-              <p className="text-sm font-medium text-muted mb-1">Phone Number</p>
-              <p className="text-lg font-medium">{userProfile.phone}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted mb-1">College Email</p>
-              <p className="text-lg font-medium">{userProfile.collegeEmail || "Not Provided"}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted mb-1">Course & Branch</p>
-              <p className="text-lg font-medium">{userProfile.course} in {userProfile.branch}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted mb-1">Year of Study</p>
-              <p className="text-lg font-medium">{userProfile.year}</p>
-            </div>
+          <div className="flex justify-between items-end mb-6">
+            <h3 className="text-xl font-bold">Personal Details</h3>
+            {(userProfile.role === "admin" || userProfile.role === "core") && !isEditingAdmin && (
+              <button 
+                onClick={startAdminEdit}
+                className="text-sm font-medium text-accent-blue hover:underline"
+              >
+                Edit Details
+              </button>
+            )}
           </div>
+
+          {isEditingAdmin ? (
+            <form onSubmit={handleAdminEditSave} className="mb-10 bg-surface/50 p-6 rounded-2xl border border-border/70">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1">Phone Number</label>
+                  <input 
+                    type="text"
+                    required
+                    value={adminFormData.phone}
+                    onChange={e => setAdminFormData({...adminFormData, phone: e.target.value})}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:border-accent-blue"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1">College Email</label>
+                  <input 
+                    type="email"
+                    required
+                    value={adminFormData.collegeEmail}
+                    onChange={e => setAdminFormData({...adminFormData, collegeEmail: e.target.value})}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:border-accent-blue"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1">Course</label>
+                  <input 
+                    type="text"
+                    required
+                    value={adminFormData.course}
+                    onChange={e => setAdminFormData({...adminFormData, course: e.target.value})}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:border-accent-blue"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1">Branch</label>
+                  <input 
+                    type="text"
+                    required
+                    value={adminFormData.branch}
+                    onChange={e => setAdminFormData({...adminFormData, branch: e.target.value})}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:border-accent-blue"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1">Year of Study</label>
+                  <select 
+                    required
+                    value={adminFormData.year}
+                    onChange={e => setAdminFormData({...adminFormData, year: e.target.value})}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:border-accent-blue"
+                  >
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setIsEditingAdmin(false)}
+                  className="rounded-full px-6 py-2 text-sm font-medium text-muted hover:text-foreground"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isSavingAdminEdit}
+                  className="rounded-full bg-accent-blue px-6 py-2 text-sm font-medium text-white hover:scale-[1.02] transition-transform disabled:opacity-50"
+                >
+                  {isSavingAdminEdit ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+              <div>
+                <p className="text-sm font-medium text-muted mb-1">Phone Number</p>
+                <p className="text-lg font-medium">{userProfile.phone}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted mb-1">College Email</p>
+                <p className="text-lg font-medium">{userProfile.collegeEmail || "Not Provided"}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted mb-1">Course & Branch</p>
+                <p className="text-lg font-medium">{userProfile.course} in {userProfile.branch}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted mb-1">Year of Study</p>
+                <p className="text-lg font-medium">{userProfile.year}</p>
+              </div>
+            </div>
+          )}
 
           {(userProfile.role === "admin" || userProfile.role === "core") && (
             <div className="rounded-2xl bg-accent-blue/10 p-6 border border-accent-blue/20 mb-10">
