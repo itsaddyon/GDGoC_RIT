@@ -4,13 +4,13 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Footer } from "@/components/layout/footer";
 import Link from "next/link";
 import { GDGMark } from "@/components/ui/gdg-mark";
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 
-export default function LoginPage() {
+function LoginContent() {
   const [error, setError] = useState("");
   const [isSigningIn, setIsSigningIn] = useState(false);
   const router = useRouter();
@@ -79,5 +79,13 @@ export default function LoginPage() {
       </div>
       <Footer />
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<main className="flex min-h-screen items-center justify-center">Loading...</main>}>
+      <LoginContent />
+    </Suspense>
   );
 }
