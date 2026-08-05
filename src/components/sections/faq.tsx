@@ -1,12 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
-import { FAQS } from "@/data/content";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export function Faq() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [faqs, setFaqs] = useState<{question: string, answer: string}[]>([]);
+
+  useEffect(() => {
+    const fetchFaqs = async () => {
+      try {
+        const snap = await getDoc(doc(db, "site_content", "main"));
+        if (snap.exists() && snap.data().faqs) {
+          setFaqs(snap.data().faqs);
+        }
+      } catch (error) {
+        console.error("Failed to fetch faqs:", error);
+      }
+    };
+    fetchFaqs();
+  }, []);
 
   return (
     <section id="faq" className="relative border-t border-border/70 py-24 sm:py-32">
@@ -27,7 +43,7 @@ export function Faq() {
         </motion.div>
 
         <div className="divide-y divide-border/70 border-y border-border/70">
-          {FAQS.map((f, i) => {
+          {faqs.map((f, i) => {
             const isOpen = openIndex === i;
             return (
               <div key={f.question}>

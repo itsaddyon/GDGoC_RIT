@@ -13,6 +13,7 @@ export default function CompleteProfilePage() {
   const router = useRouter();
   
   const [phone, setPhone] = useState("");
+  const [collegeEmail, setCollegeEmail] = useState("");
   const [course, setCourse] = useState("BTech");
   const [branch, setBranch] = useState("CSE");
   const [year, setYear] = useState("1st Year");
@@ -31,13 +32,25 @@ export default function CompleteProfilePage() {
     e.preventDefault();
     if (!user) return;
 
+    // Strict Validations
+    if (!/^\d{10}$/.test(phone)) {
+      alert("Please enter exactly 10 digits for your mobile number.");
+      return;
+    }
+
+    if (!collegeEmail.trim().toLowerCase().endsWith("@ritroorkee.com")) {
+      alert("College Email must end with @ritroorkee.com");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
-        email: user.email,
+        email: user.email, // personal email from Google auth
         name: user.displayName,
         phone,
+        collegeEmail: collegeEmail.trim().toLowerCase(),
         course,
         branch,
         year,
@@ -73,10 +86,28 @@ export default function CompleteProfilePage() {
               type="tel" 
               required
               value={phone}
-              onChange={e => setPhone(e.target.value)}
+              onChange={e => {
+                // Only allow numbers
+                const val = e.target.value.replace(/\D/g, "");
+                if (val.length <= 10) setPhone(val);
+              }}
               placeholder="e.g. 9876543210" 
               className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:border-accent-blue focus:outline-none"
             />
+            <p className="text-xs text-muted mt-1">Exactly 10 digits required.</p>
+          </div>
+
+          <div className="mb-5">
+            <label className="mb-2 block text-sm font-medium">College Email</label>
+            <input 
+              type="email" 
+              required
+              value={collegeEmail}
+              onChange={e => setCollegeEmail(e.target.value)}
+              placeholder="e.g. student@ritroorkee.com" 
+              className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:border-accent-blue focus:outline-none"
+            />
+            <p className="text-xs text-muted mt-1">Must end with @ritroorkee.com</p>
           </div>
 
           <div className="mb-5">

@@ -10,10 +10,16 @@ export type UserProfile = {
   email: string;
   name: string;
   phone: string;
+  collegeEmail: string;
   course: string;
   branch: string;
   year: string;
   role?: string;
+  coreTeamRole?: string;
+  github?: string;
+  linkedin?: string;
+  twitter?: string;
+  instagram?: string;
 };
 
 type AuthContextType = {

@@ -24,35 +24,10 @@ import { useAuth } from "@/contexts/auth-context";
 import { EVENTS } from "@/data/content";
 
 import { Footer } from "@/components/layout/footer";
-
-import {
-  EventHero,
-  EventOverview,
-  EventStats,
-  EventHighlights,
-  EventGallery,
-  EventRegistration,
-} from "@/components/events";
-
-type EventData = {
-  id: string;
-  title: string;
-  desc: string;
-  date: string;
-  type: string;
-  color: string;
-
-  venue?: string;
-  duration?: string;
-  participants?: number;
-  registrationOpen?: boolean;
-
-  highlights?: string[];
-
-  gallery?: string[];
-
-  banner?: string;
-};
+import { useParams, useRouter } from "next/navigation";
+import { EVENTS } from "@/data/content";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function EventDetailsPage() {
   const { id } = useParams();
@@ -73,124 +48,52 @@ export default function EventDetailsPage() {
     useState(false);
 
   useEffect(() => {
-    if (!id) return;
-
-    const found = EVENTS.find(
-      (event) => event.id === id
-    ) as EventData | undefined;
-
-    if (found) {
-      setEventData({
-        ...found,
-
-        venue:
-          found.venue ??
-          "Seminar Hall, RIT Roorkee",
-
-        duration:
-          found.duration ??
-          "4 Hours",
-
-        participants:
-          found.participants ??
-          180,
-
-        registrationOpen:
-          found.registrationOpen ??
-          false,
-
-        highlights:
-          found.highlights ?? [
-            "Hands-on Workshop",
-            "Interactive Q&A Session",
-            "Networking Opportunity",
-            "Participation Certificate",
-          ],
-
-        gallery:
-          found.gallery ?? [
-            "/events/default/1.jpg",
-            "/events/default/2.jpg",
-            "/events/default/3.jpg",
-            "/events/default/4.jpg",
-            "/events/default/5.jpg",
-            "/events/default/6.jpg",
-          ],
-
-        banner:
-          found.banner ??
-          "/events/default/banner.jpg",
-      });
+    if (id) {
+      const found = EVENTS.find(e => e.id === id);
+      if (found) setEventData(found);
     }
 
     setLoading(false);
   }, [id]);
 
   useEffect(() => {
-    if (!user || !eventData) return;
-
-    const checkRegistration =
-      async () => {
-        const registrationRef = doc(
-          db,
-          "event_registrations",
-          `${eventData.id}_${user.uid}`
-        );
-
-        const snapshot =
-          await getDoc(registrationRef);
-
-        setIsRegistered(snapshot.exists());
-      };
-
+    const checkRegistration = async () => {
+      if (user && eventData) {
+        const regRef = doc(db, "event_registrations", `${eventData.id}_${user.uid}`);
+        const regSnap = await getDoc(regRef);
+        if (regSnap.exists()) {
+          setIsRegistered(true);
+        }
+      }
+    };
     checkRegistration();
   }, [user, eventData]);
 
-  const handleRegister =
-    async () => {
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-
-      if (!eventData) return;
-
-      setIsRegistering(true);
-
-      try {
-        const registrationId =
-          `${eventData.id}_${user.uid}`;
-
-        await setDoc(
-          doc(
-            db,
-            "event_registrations",
-            registrationId
-          ),
-          {
-            eventId: eventData.id,
-
-            eventTitle:
-              eventData.title,
-
-            userId: user.uid,
-
-            registeredAt:
-              new Date().toISOString(),
-          }
-        );
-
-        setIsRegistered(true);
-      } catch (error) {
-        console.error(error);
-
-        alert(
-          "Unable to register for this event."
-        );
-      } finally {
-        setIsRegistering(false);
-      }
-    };
+  const handleRegister = async () => {
+    if (!user) {
+      alert("You must log in to register for an event!");
+      router.push("/login");
+      return;
+    }
+    
+    setIsRegistering(true);
+    try {
+      const regId = `${eventData.id}_${user.uid}`;
+      await setDoc(doc(db, "event_registrations", regId), {
+        eventId: eventData.id,
+        eventTitle: eventData.title,
+        userId: user.uid,
+        registeredAt: new Date().toISOString(),
+      });
+      setIsRegistered(true);
+      alert(`Successfully registered for ${eventData.title}!`);
+    } catch (error) {
+      console.error("Error registering:", error);
+      alert("Registration failed. Please try again.");
+    } finally {
+      setIsRegistering(false);
+    }
+  };
 
   const relatedEvents = useMemo(() => {
     if (!eventData) return [];
