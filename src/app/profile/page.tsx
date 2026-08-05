@@ -15,7 +15,9 @@ export default function ProfilePage() {
   const [requestSent, setRequestSent] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [requestedChanges, setRequestedChanges] = useState("");
+  const [editField, setEditField] = useState<"phone" | "collegeEmail" | "course" | "branch" | "year">("phone");
+  const [newValue, setNewValue] = useState("");
+  const [editReason, setEditReason] = useState("");
   const [isSavingRole, setIsSavingRole] = useState(false);
   const [github, setGithub] = useState("");
   const [linkedin, setLinkedin] = useState("");
@@ -54,23 +56,32 @@ export default function ProfilePage() {
 
   const handleEditRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !requestedChanges.trim()) {
-      alert("Please specify what you want to change.");
+    if (!user || !userProfile) return;
+    
+    if (!newValue.trim() || !editReason.trim()) {
+      alert("Please provide the new value and a reason for the change.");
       return;
     }
     
     setIsRequesting(true);
     try {
+      const oldValue = userProfile[editField] || "";
+      
       await setDoc(doc(db, "profile_edit_requests", user.uid), {
         userId: user.uid,
-        name: userProfile?.name,
-        email: userProfile?.email,
-        requestedChanges: requestedChanges.trim(),
+        name: userProfile.name,
+        email: userProfile.email,
+        field: editField,
+        oldValue: oldValue,
+        newValue: newValue.trim(),
+        reason: editReason.trim(),
         requestedAt: new Date().toISOString(),
         status: "pending"
       });
       setRequestSent(true);
       setShowForm(false);
+      setNewValue("");
+      setEditReason("");
       alert("Edit request sent! The core team will review it shortly.");
     } catch (error) {
       console.error("Error sending request:", error);
@@ -283,23 +294,62 @@ export default function ProfilePage() {
                   onClick={() => setShowForm(true)}
                   className="shrink-0 rounded-full border border-border px-6 py-2 text-sm font-medium hover:bg-surface-raised transition-colors"
                 >
-                  Request Edit Access
+                  Request edit in profile
                 </button>
               ) : null}
             </div>
 
             {showForm && !requestSent && (
-              <form onSubmit={handleEditRequest} className="mt-6 pt-6 border-t border-border/70">
-                <label className="block text-sm font-medium mb-2">What would you like to change?</label>
-                <textarea 
-                  required
-                  rows={3}
-                  placeholder="e.g., I need to update my phone number to 9876543210..."
-                  value={requestedChanges}
-                  onChange={(e) => setRequestedChanges(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-accent-blue focus:outline-none mb-4 resize-none"
-                />
-                <div className="flex gap-3 justify-end">
+              <form onSubmit={handleEditRequest} className="mt-6 pt-6 border-t border-border/70 flex flex-col gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">What would you like to change?</label>
+                  <select 
+                    value={editField}
+                    onChange={(e) => {
+                      setEditField(e.target.value as any);
+                      setNewValue("");
+                    }}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:border-accent-blue focus:outline-none"
+                  >
+                    <option value="phone">Phone Number</option>
+                    <option value="collegeEmail">College Email</option>
+                    <option value="course">Course</option>
+                    <option value="branch">Branch / Specialization</option>
+                    <option value="year">Year of Study</option>
+                  </select>
+                </div>
+
+                <div className="p-3 bg-background rounded-lg border border-border/50 text-sm flex flex-col gap-1">
+                  <span className="text-muted text-xs font-bold uppercase tracking-wider">Current Value</span>
+                  <span className="font-medium text-foreground">{userProfile[editField] || "Not Set"}</span>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">New Value</label>
+                  <input 
+                    type="text"
+                    required
+                    value={newValue}
+                    onChange={(e) => setNewValue(e.target.value)}
+                    placeholder="Enter the correct value..."
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:border-accent-blue focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Reason for change <span className="text-accent-red">*</span></label>
+                  <textarea 
+                    required
+                    rows={2}
+                    placeholder="Please explain why you are requesting this change..."
+                    value={editReason}
+                    onChange={(e) => setEditReason(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-accent-blue focus:outline-none resize-none"
+                  />
+                  <p className="text-xs text-muted mt-1">A valid reason is required for the core team to approve your request.</p>
+                </div>
+
+                <div className="flex gap-3 justify-end mt-2">
                   <button 
                     type="button" 
                     onClick={() => setShowForm(false)}

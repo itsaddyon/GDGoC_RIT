@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { DynamicImage } from "@/components/ui/dynamic-image";
+import { FlipButton, FlipButtonFront, FlipButtonBack } from "@/components/ui/flip-button";
 
 // SVG Icons
 const GithubIcon = ({ size = 20 }) => (
@@ -18,95 +20,117 @@ const TwitterIcon = ({ size = 20 }) => (
 const InstagramIcon = ({ size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
 );
+const FlipIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"></circle>
+    <line x1="12" y1="16" x2="12" y2="12"></line>
+    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+  </svg>
+);
+const GlobeIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+);
 
 const CURRENT_TEAM = [
+  // 3rd Years
   {
     id: "1", name: "Akshita Jain", role: "GDG Lead & Event Manager",
     course: "B.Tech", year: "3rd Year", accent: "var(--accent-blue)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/akshita-jain.jpg"
+    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/akshita-jain.jpeg"
   },
   {
     id: "2", name: "Arpit Pandey", role: "Event Manager",
     course: "B.Tech", year: "3rd Year", accent: "var(--accent-red)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/arpit-pandey.jpg"
+    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/arpit-pandey.jpeg"
   },
   {
-    id: "3", name: "Ansh Dixit", role: "Social Media Lead",
+    id: "7", name: "Ansh Dixit", role: "Social Media Lead",
     course: "B.Tech", year: "3rd Year", accent: "var(--accent-yellow)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/ansh-dixit.jpg"
+    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/ansh-dixit.jpeg"
   },
   {
-    id: "4", name: "Aditi Jaiswal", role: "Social Media Lead",
-    course: "B.Tech", year: "3rd Year", accent: "var(--accent-blue)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/aditi-jaiswal.jpg"
-  },
-  {
-    id: "5", name: "Aditya Raj", role: "Tech Lead",
+    id: "4", name: "Aditya Raj", role: "Tech Lead",
     course: "B.Tech", year: "3rd Year", accent: "var(--accent-green)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/aditya-raj.jpg"
+    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/aditya-raj-current.jpeg"
   },
   {
-    id: "6", name: "Adarsh Arya", role: "Tech Lead",
+    id: "8", name: "Aditi Jaiswal", role: "Social Media Lead",
+    course: "B.Tech", year: "3rd Year", accent: "var(--accent-blue)",
+    github: "https://github.com/aditi-j28", linkedin: "https://www.linkedin.com/in/aditi-jaiswal-b19a9932a", image: "/team/aditi-jaiswal.jpeg"
+  },
+  {
+    id: "9", name: "Amit Raj", role: "Graphic Lead",
+    course: "B.Tech", year: "3rd Year", accent: "var(--accent-yellow)",
+    github: "https://github.com/raajamit10", linkedin: "https://www.linkedin.com/in/amit-raj-078b37324/", image: "/team/amit-raj.jpeg"
+  },
+  // 2nd Years
+  {
+    id: "3", name: "Adarsh Arya", role: "Tech Lead",
     course: "B.Tech", year: "2nd Year", accent: "var(--accent-red)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/adarsh-arya.jpg"
+    portfolio: "https://itsaddyon.dev", github: "https://github.com/itsaddyon", linkedin: "https://linkedin.com/in/itsaddyon", image: "/team/adarsh-arya.jpeg"
   },
   {
-    id: "7", name: "Vaishnavi Pandey", role: "Social Media Lead",
-    course: "B.Tech", year: "2nd Year", accent: "var(--accent-yellow)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/vaishnavi-pandey.jpg"
-  },
-  {
-    id: "8", name: "Arpit Panwar", role: "Tech Lead",
-    course: "B.Tech", year: "2nd Year", accent: "var(--accent-green)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/arpit-panwar.jpg"
-  },
-  {
-    id: "9", name: "Shaurya Hindocha", role: "PR & Outreach",
+    id: "6", name: "Aditya Kumar", role: "Social Media Lead",
     course: "B.Tech", year: "2nd Year", accent: "var(--accent-blue)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/shaurya-hindocha.jpg"
+    github: "https://github.com/akm44287238-cpu", linkedin: "https://www.linkedin.com/in/aditya-krr", image: "/team/aditya-kumar.jpeg"
+  },
+  {
+    id: "5", name: "Arpit Panwar", role: "Tech Lead",
+    course: "B.Tech", year: "2nd Year", accent: "var(--accent-green)",
+    github: "https://github.com/arpitpanwar19", linkedin: "https://linkedin.com/in/arpitpanwar19", image: "/team/arpit-panwar.jpeg"
+  },
+  {
+    id: "10", name: "Vaishnavi Pandey", role: "Graphic Lead",
+    course: "B.Tech", year: "2nd Year", accent: "var(--accent-yellow)",
+    github: "https://github.com/vaishnavipandeyuniversity-ship-it", linkedin: "https://www.linkedin.com/in/vaishnavi-pandey-8868672bb", image: "/team/vaishnavi-pandey.jpeg"
+  },
+  {
+    id: "11", name: "Shaurya Hindocha", role: "PR & Outreach",
+    course: "B.Tech", year: "2nd Year", accent: "var(--accent-blue)",
+    github: "https://github.com/shaurya07-cell", linkedin: "https://www.linkedin.com/in/shaurya-hindocha-47961b380", image: "/team/shaurya-hindocha.jpeg"
   }
 ];
 
 const FOUNDING_TEAM = [
   {
     id: "f1", name: "Aditya Raj", role: "GDG Lead",
-    course: "B.Tech", year: "Alumni", accent: "var(--accent-blue)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/aditya-raj.jpg"
+    course: "B.Tech", year: "4th Year", accent: "var(--accent-blue)",
+    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/aditya-raj.jpeg"
   },
   {
     id: "f2", name: "Ashwani Raj", role: "Core Team",
-    course: "B.Tech", year: "Alumni", accent: "var(--accent-red)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/ashwani-raj.jpg"
+    course: "B.Tech", year: "4th Year", accent: "var(--accent-red)",
+    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/ashwani-raj.jpeg"
   },
   {
     id: "f3", name: "Harsh Raj Shukla", role: "Core Team",
-    course: "B.Tech", year: "Alumni", accent: "var(--accent-yellow)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/harsh-raj-shukla.jpg"
+    course: "B.Tech", year: "4th Year", accent: "var(--accent-yellow)",
+    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/harsh-raj-shukla.jpeg"
   },
   {
     id: "f4", name: "Priyanshu Raushan", role: "Core Team",
-    course: "B.Tech", year: "Alumni", accent: "var(--accent-green)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/priyanshu-raushan.jpg"
+    course: "B.Tech", year: "4th Year", accent: "var(--accent-green)",
+    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/priyanshu-raushan.jpeg"
   },
   {
     id: "f5", name: "Akshita Jain", role: "Core Team",
-    course: "B.Tech", year: "Alumni", accent: "var(--accent-blue)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/akshita-jain.jpg"
+    course: "B.Tech", year: "3rd Year", accent: "var(--accent-blue)",
+    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/akshita-jain.jpeg"
   },
   {
     id: "f6", name: "Ansh Dixit", role: "Core Team",
-    course: "B.Tech", year: "Alumni", accent: "var(--accent-red)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/ansh-dixit.jpg"
+    course: "B.Tech", year: "3rd Year", accent: "var(--accent-yellow)",
+    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/ansh-dixit.jpeg"
   },
   {
-    id: "f7", name: "Adarsh Arya", role: "Core Team",
-    course: "B.Tech", year: "Alumni", accent: "var(--accent-yellow)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/adarsh-arya.jpg"
+    id: "f7", name: "Adarsh Arya", role: "Junior Team",
+    course: "B.Tech", year: "2nd Year", accent: "var(--accent-red)",
+    portfolio: "https://itsaddyon.dev", github: "https://github.com/itsaddyon", linkedin: "https://linkedin.com/in/itsaddyon", image: "/team/adarsh-arya.jpeg"
   },
   {
-    id: "f8", name: "Arpit Panwar", role: "Core Team",
-    course: "B.Tech", year: "Alumni", accent: "var(--accent-green)",
-    github: "https://github.com", linkedin: "https://linkedin.com", image: "/team/arpit-panwar.jpg"
+    id: "f8", name: "Arpit Panwar", role: "Junior Team",
+    course: "B.Tech", year: "2nd Year", accent: "var(--accent-green)",
+    github: "https://github.com/arpitpanwar19", linkedin: "https://linkedin.com/in/arpitpanwar19", image: "/team/arpit-panwar.jpeg"
   }
 ];
 
@@ -124,8 +148,8 @@ export function People() {
           const data = doc.data();
           if (data.name) {
             links[data.name.toLowerCase()] = {
-              github: data.github,
-              linkedin: data.linkedin,
+              github: (data.github && data.github !== "https://github.com" && data.github !== "https://github.com/") ? data.github : undefined,
+              linkedin: (data.linkedin && data.linkedin !== "https://linkedin.com" && data.linkedin !== "https://www.linkedin.com" && data.linkedin !== "https://linkedin.com/") ? data.linkedin : undefined,
               twitter: data.twitter,
               instagram: data.instagram
             };
@@ -160,98 +184,8 @@ export function People() {
           </p>
         </motion.div>
 
-        <h3 className="text-2xl font-bold mb-8 text-foreground mt-4">Current Team</h3>
+        <h3 className="text-2xl font-bold mb-8 text-foreground mt-4">Founding Team</h3>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5 mb-24">
-          {CURRENT_TEAM.map((person, index) => (
-            <motion.div
-              key={person.id}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, delay: (index % 5) * 0.06, ease: "easeOut" }}
-              className="relative aspect-[3/4] w-full perspective-1000"
-            >
-              <div 
-                className={`relative h-full w-full cursor-pointer transition-all duration-700 transform-style-preserve-3d ${
-                  flippedCardId === person.id ? "rotate-y-180" : "hover:-translate-y-1"
-                }`}
-                onClick={() => setFlippedCardId(flippedCardId === person.id ? null : person.id)}
-              >
-                {/* Front of Card */}
-                <article className="absolute inset-0 backface-hidden overflow-hidden rounded-[1.65rem] border border-border bg-surface/95 group">
-                  <img 
-                    src={person.image} 
-                    alt={person.name}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-0" />
-                  
-                  {/* Flip Hint on Front */}
-                  <div className="absolute top-5 right-5 z-10">
-                    <span className="rounded-full bg-black/50 px-2.5 py-1 text-[9px] font-medium uppercase tracking-wider text-white backdrop-blur-md border border-white/20">
-                      Click to flip 🔄
-                    </span>
-                  </div>
-
-                  <div className="absolute inset-0 p-5 flex flex-col justify-end z-10">
-                    <div
-                      className="absolute left-4 top-5 h-2.5 w-2.5 rounded-full z-10"
-                      style={{ background: person.accent }}
-                    />
-                    <div className="relative">
-                      <div className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-white/70">
-                        Core team
-                      </div>
-                      <h3 className="text-xl font-medium leading-tight tracking-tight text-white">
-                        {person.name.split(" ")[0]}
-                      </h3>
-                      <p className="mt-1 text-xs text-white/90 font-medium">{person.role}</p>
-                    </div>
-                  </div>
-                </article>
-
-                {/* Back of Card */}
-                <article className="absolute inset-0 backface-hidden rotate-y-180 overflow-hidden rounded-[1.65rem] border border-accent-blue/30 bg-surface flex flex-col items-center justify-center p-4 text-center shadow-[0_0_20px_rgba(66,133,244,0.1)]">
-                  <img 
-                    src={person.image} 
-                    alt={person.name}
-                    className="mb-4 h-16 w-16 rounded-full object-cover border-2 absolute top-4 z-10"
-                    style={{ borderColor: person.accent }}
-                  />
-                  <h3 className="text-lg font-semibold text-foreground mb-1 mt-14">{person.name}</h3>
-                  <p className="text-xs text-muted mb-4 font-bold text-accent-blue uppercase tracking-wider">{person.role}</p>
-                  <p className="text-xs text-muted mb-4">{person.course} • {person.year}</p>
-                  
-                  <div className="flex gap-3">
-                    <a href={socialLinks[person.name.toLowerCase()]?.github || person.github} target="_blank" rel="noreferrer" className="text-muted hover:text-foreground transition-colors" onClick={(e) => e.stopPropagation()}>
-                      <GithubIcon size={18} />
-                    </a>
-                    <a href={socialLinks[person.name.toLowerCase()]?.linkedin || person.linkedin} target="_blank" rel="noreferrer" className="text-muted hover:text-accent-blue transition-colors" onClick={(e) => e.stopPropagation()}>
-                      <LinkedinIcon size={18} />
-                    </a>
-                    {socialLinks[person.name.toLowerCase()]?.twitter && (
-                      <a href={socialLinks[person.name.toLowerCase()].twitter} target="_blank" rel="noreferrer" className="text-muted hover:text-foreground transition-colors" onClick={(e) => e.stopPropagation()}>
-                        <TwitterIcon size={18} />
-                      </a>
-                    )}
-                    {socialLinks[person.name.toLowerCase()]?.instagram && (
-                      <a href={socialLinks[person.name.toLowerCase()].instagram} target="_blank" rel="noreferrer" className="text-muted hover:text-accent-red transition-colors" onClick={(e) => e.stopPropagation()}>
-                        <InstagramIcon size={18} />
-                      </a>
-                    )}
-                  </div>
-                  
-                  <button className="mt-6 text-[10px] uppercase tracking-wider text-muted underline" onClick={(e) => { e.stopPropagation(); setFlippedCardId(null); }}>
-                    Flip Back
-                  </button>
-                </article>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <h3 className="text-2xl font-bold mb-8 text-foreground">Founding Team</h3>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
           {FOUNDING_TEAM.map((person, index) => (
             <motion.div
               key={person.id}
@@ -261,26 +195,30 @@ export function People() {
               transition={{ duration: 0.5, delay: (index % 5) * 0.06, ease: "easeOut" }}
               className="relative aspect-[3/4] w-full perspective-1000"
             >
-              <div 
-                className={`relative h-full w-full cursor-pointer transition-all duration-700 transform-style-preserve-3d ${
-                  flippedCardId === person.id ? "rotate-y-180" : "hover:-translate-y-1"
-                }`}
+              <div
+                className={`relative h-full w-full cursor-pointer transition-all duration-700 transform-style-preserve-3d ${flippedCardId === person.id ? "rotate-y-180" : "hover:-translate-y-1"
+                  }`}
                 onClick={() => setFlippedCardId(flippedCardId === person.id ? null : person.id)}
               >
                 {/* Front of Card */}
                 <article className="absolute inset-0 backface-hidden overflow-hidden rounded-[1.65rem] border border-border bg-surface/95 group">
-                  <img 
-                    src={person.image} 
+                  <img
+                    src={person.image}
                     alt={person.name}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 grayscale" 
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-0" />
-                  
+
                   {/* Flip Hint on Front */}
                   <div className="absolute top-5 right-5 z-10">
-                    <span className="rounded-full bg-black/50 px-2.5 py-1 text-[9px] font-medium uppercase tracking-wider text-white backdrop-blur-md border border-white/20">
-                      Click to flip 🔄
-                    </span>
+                    <FlipButton className="h-8 w-8 rounded-full shadow-lg">
+                      <FlipButtonFront className="rounded-full bg-black/40 text-white backdrop-blur-md border border-white/20">
+                        <FlipIcon size={14} />
+                      </FlipButtonFront>
+                      <FlipButtonBack className="rounded-full bg-accent-blue/80 text-white backdrop-blur-md border border-accent-blue">
+                        <span className="text-[8px] font-bold uppercase tracking-widest">Flip</span>
+                      </FlipButtonBack>
+                    </FlipButton>
                   </div>
 
                   <div className="absolute inset-0 p-5 flex flex-col justify-end z-10">
@@ -293,7 +231,7 @@ export function People() {
                         Founding Team
                       </div>
                       <h3 className="text-xl font-medium leading-tight tracking-tight text-white">
-                        {person.name.split(" ")[0]}
+                        {person.name}
                       </h3>
                       <p className="mt-1 text-xs text-white/90 font-medium">{person.role}</p>
                     </div>
@@ -301,9 +239,9 @@ export function People() {
                 </article>
 
                 {/* Back of Card */}
-                <article className="absolute inset-0 backface-hidden rotate-y-180 overflow-hidden rounded-[1.65rem] border border-accent-blue/30 bg-surface flex flex-col items-center justify-center p-4 text-center shadow-[0_0_20px_rgba(66,133,244,0.1)]">
-                  <img 
-                    src={person.image} 
+                <article className="absolute inset-0 backface-hidden rotate-y-180 overflow-hidden rounded-[1.65rem] border border-accent-blue/30 bg-surface flex flex-col items-center justify-center p-4 text-center shadow-[0_0_20px_rgba(66,133,244,0.1)]" style={{ WebkitTransform: "rotateY(180deg) translateZ(1px)", transform: "rotateY(180deg) translateZ(1px)" }}>
+                  <DynamicImage
+                    basePath={person.image.replace(/\.[^/.]+$/, "")}
                     alt={person.name}
                     className="mb-4 h-16 w-16 rounded-full object-cover border-2 absolute top-4 z-10"
                     style={{ borderColor: person.accent }}
@@ -311,26 +249,130 @@ export function People() {
                   <h3 className="text-lg font-semibold text-foreground mb-1 mt-14">{person.name}</h3>
                   <p className="text-xs text-muted mb-4 font-bold text-accent-blue uppercase tracking-wider">{person.role}</p>
                   <p className="text-xs text-muted mb-4">{person.course} • {person.year}</p>
-                  
-                  <div className="flex gap-3">
-                    <a href={socialLinks[person.name.toLowerCase()]?.github || person.github} target="_blank" rel="noreferrer" className="text-muted hover:text-foreground transition-colors" onClick={(e) => e.stopPropagation()}>
+
+                  <div className="flex gap-2 relative z-50" style={{ transform: "translateZ(30px)" }}>
+                    {(person as any).portfolio && (
+                      <div className="p-2 text-muted hover:text-accent-blue transition-colors cursor-pointer" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open((person as any).portfolio, "_blank"); }}>
+                        <GlobeIcon size={18} />
+                      </div>
+                    )}
+                    <div className="p-2 text-muted hover:text-foreground transition-colors cursor-pointer" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); const url = socialLinks[person.name.toLowerCase()]?.github || person.github; if (url) window.open(url, "_blank"); }}>
                       <GithubIcon size={18} />
-                    </a>
-                    <a href={socialLinks[person.name.toLowerCase()]?.linkedin || person.linkedin} target="_blank" rel="noreferrer" className="text-muted hover:text-accent-blue transition-colors" onClick={(e) => e.stopPropagation()}>
+                    </div>
+                    <div className="p-2 text-muted hover:text-accent-blue transition-colors cursor-pointer" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); const url = socialLinks[person.name.toLowerCase()]?.linkedin || person.linkedin; if (url) window.open(url, "_blank"); }}>
                       <LinkedinIcon size={18} />
-                    </a>
+                    </div>
                     {socialLinks[person.name.toLowerCase()]?.twitter && (
-                      <a href={socialLinks[person.name.toLowerCase()].twitter} target="_blank" rel="noreferrer" className="text-muted hover:text-foreground transition-colors" onClick={(e) => e.stopPropagation()}>
+                      <div className="p-2 text-muted hover:text-foreground transition-colors cursor-pointer" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); const url = socialLinks[person.name.toLowerCase()].twitter; if (url) window.open(url, "_blank"); }}>
                         <TwitterIcon size={18} />
-                      </a>
+                      </div>
                     )}
                     {socialLinks[person.name.toLowerCase()]?.instagram && (
-                      <a href={socialLinks[person.name.toLowerCase()].instagram} target="_blank" rel="noreferrer" className="text-muted hover:text-accent-red transition-colors" onClick={(e) => e.stopPropagation()}>
+                      <div className="p-2 text-muted hover:text-accent-red transition-colors cursor-pointer" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); const url = socialLinks[person.name.toLowerCase()].instagram; if (url) window.open(url, "_blank"); }}>
                         <InstagramIcon size={18} />
-                      </a>
+                      </div>
                     )}
                   </div>
-                  
+
+                  <button className="mt-6 text-[10px] uppercase tracking-wider text-muted underline" onClick={(e) => { e.stopPropagation(); setFlippedCardId(null); }}>
+                    Flip Back
+                  </button>
+                </article>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <h3 className="text-2xl font-bold mb-8 text-foreground mt-4">Current Team</h3>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+          {CURRENT_TEAM.map((person, index) => (
+            <motion.div
+              key={person.id}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.5, delay: (index % 5) * 0.06, ease: "easeOut" }}
+              className="relative aspect-[3/4] w-full perspective-1000"
+            >
+              <div
+                className={`relative h-full w-full cursor-pointer transition-all duration-700 transform-style-preserve-3d ${flippedCardId === person.id ? "rotate-y-180" : "hover:-translate-y-1"
+                  }`}
+                onClick={() => setFlippedCardId(flippedCardId === person.id ? null : person.id)}
+              >
+                {/* Front of Card */}
+                <article className="absolute inset-0 backface-hidden overflow-hidden rounded-[1.65rem] border border-border bg-surface/95 group">
+                  <DynamicImage
+                    basePath={person.image.replace(/\.[^/.]+$/, "")}
+                    alt={person.name}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-0" />
+
+                  {/* Flip Hint on Front */}
+                  <div className="absolute top-5 right-5 z-10">
+                    <FlipButton className="h-8 w-8 rounded-full shadow-lg">
+                      <FlipButtonFront className="rounded-full bg-black/40 text-white backdrop-blur-md border border-white/20">
+                        <FlipIcon size={14} />
+                      </FlipButtonFront>
+                      <FlipButtonBack className="rounded-full bg-accent-blue/80 text-white backdrop-blur-md border border-accent-blue">
+                        <span className="text-[8px] font-bold uppercase tracking-widest">Flip</span>
+                      </FlipButtonBack>
+                    </FlipButton>
+                  </div>
+
+                  <div className="absolute inset-0 p-5 flex flex-col justify-end z-10">
+                    <div
+                      className="absolute left-4 top-5 h-2.5 w-2.5 rounded-full z-10"
+                      style={{ background: person.accent }}
+                    />
+                    <div className="relative">
+                      <div className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-white/70">
+                        Core team
+                      </div>
+                      <h3 className="text-xl font-medium leading-tight tracking-tight text-white">
+                        {person.name}
+                      </h3>
+                      <p className="mt-1 text-xs text-white/90 font-medium">{person.role}</p>
+                    </div>
+                  </div>
+                </article>
+
+                {/* Back of Card */}
+                <article className="absolute inset-0 backface-hidden rotate-y-180 overflow-hidden rounded-[1.65rem] border border-accent-blue/30 bg-surface flex flex-col items-center justify-center p-4 text-center shadow-[0_0_20px_rgba(66,133,244,0.1)]" style={{ WebkitTransform: "rotateY(180deg) translateZ(1px)", transform: "rotateY(180deg) translateZ(1px)" }}>
+                  <DynamicImage
+                    basePath={person.image.replace(/\.[^/.]+$/, "")}
+                    alt={person.name}
+                    className="mb-4 h-16 w-16 rounded-full object-cover border-2 absolute top-4 z-10"
+                    style={{ borderColor: person.accent }}
+                  />
+                  <h3 className="text-lg font-semibold text-foreground mb-1 mt-14">{person.name}</h3>
+                  <p className="text-xs text-muted mb-4 font-bold text-accent-blue uppercase tracking-wider">{person.role}</p>
+                  <p className="text-xs text-muted mb-4">{person.course} • {person.year}</p>
+
+                  <div className="flex gap-2 relative z-50" style={{ transform: "translateZ(30px)" }}>
+                    {(person as any).portfolio && (
+                      <div className="p-2 text-muted hover:text-accent-blue transition-colors cursor-pointer" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open((person as any).portfolio, "_blank"); }}>
+                        <GlobeIcon size={18} />
+                      </div>
+                    )}
+                    <div className="p-2 text-muted hover:text-foreground transition-colors cursor-pointer" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); const url = socialLinks[person.name.toLowerCase()]?.github || person.github; if (url) window.open(url, "_blank"); }}>
+                      <GithubIcon size={18} />
+                    </div>
+                    <div className="p-2 text-muted hover:text-accent-blue transition-colors cursor-pointer" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); const url = socialLinks[person.name.toLowerCase()]?.linkedin || person.linkedin; if (url) window.open(url, "_blank"); }}>
+                      <LinkedinIcon size={18} />
+                    </div>
+                    {socialLinks[person.name.toLowerCase()]?.twitter && (
+                      <div className="p-2 text-muted hover:text-foreground transition-colors cursor-pointer" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); const url = socialLinks[person.name.toLowerCase()].twitter; if (url) window.open(url, "_blank"); }}>
+                        <TwitterIcon size={18} />
+                      </div>
+                    )}
+                    {socialLinks[person.name.toLowerCase()]?.instagram && (
+                      <div className="p-2 text-muted hover:text-accent-red transition-colors cursor-pointer" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.preventDefault(); e.stopPropagation(); const url = socialLinks[person.name.toLowerCase()].instagram; if (url) window.open(url, "_blank"); }}>
+                        <InstagramIcon size={18} />
+                      </div>
+                    )}
+                  </div>
+
                   <button className="mt-6 text-[10px] uppercase tracking-wider text-muted underline" onClick={(e) => { e.stopPropagation(); setFlippedCardId(null); }}>
                     Flip Back
                   </button>

@@ -12,6 +12,17 @@ type EventType = {
   desc: string;
   color: string;
   status: "published" | "draft" | "closed";
+  winner1?: string;
+  winner2?: string;
+  winner3?: string;
+  galleryLink?: string;
+  location?: string;
+  time?: string;
+  isDateTBA?: boolean;
+  isLocationTBA?: boolean;
+  registrationType?: "individual" | "team";
+  minTeamSize?: number;
+  maxTeamSize?: number;
 };
 
 export function EventManager() {
@@ -27,6 +38,7 @@ export function EventManager() {
       const snap = await getDocs(collection(db, "events"));
       const evs: EventType[] = [];
       snap.forEach(d => evs.push(d.data() as EventType));
+      evs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setEvents(evs);
     } catch (e) {
       console.error(e);
@@ -76,7 +88,12 @@ export function EventManager() {
         <h2 className="text-xl font-bold">Event Manager</h2>
         <button 
           onClick={() => {
-            setFormData({ id: "", title: "", date: "", type: "Main Event", desc: "", color: "var(--accent-blue)", status: "published" });
+            setFormData({ 
+              id: "", title: "", date: "", time: "", location: "", type: "Main Event", 
+              desc: "", color: "var(--accent-blue)", status: "published", 
+              winner1: "", winner2: "", winner3: "", galleryLink: "",
+              isDateTBA: false, isLocationTBA: false, registrationType: "individual", minTeamSize: 2, maxTeamSize: 4
+            });
             setIsEditing(true);
           }}
           className="rounded-full bg-accent-blue text-white px-4 py-2 text-sm font-bold hover:scale-[1.02] transition-transform"
@@ -110,25 +127,67 @@ export function EventManager() {
                 className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Date</label>
-              <input 
-                required
-                value={formData.date}
-                onChange={e => setFormData({ ...formData, date: e.target.value })}
-                placeholder="e.g. March 14, 2026"
-                className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
-              />
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-1">Date & Time</label>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="dateTBA" checked={formData.isDateTBA || false} onChange={e => setFormData({...formData, isDateTBA: e.target.checked})} className="rounded bg-background border-border" />
+                  <label htmlFor="dateTBA" className="text-xs cursor-pointer">Date & Time To Be Announced</label>
+                </div>
+                {!formData.isDateTBA && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <input 
+                      type="date"
+                      value={formData.date}
+                      onChange={e => setFormData({...formData, date: e.target.value})}
+                      className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                    />
+                    <input 
+                      type="time"
+                      value={formData.time || ""}
+                      onChange={e => setFormData({...formData, time: e.target.value})}
+                      className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
+            
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-1">Location</label>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="locTBA" checked={formData.isLocationTBA || false} onChange={e => setFormData({...formData, isLocationTBA: e.target.checked})} className="rounded bg-background border-border" />
+                  <label htmlFor="locTBA" className="text-xs cursor-pointer">Location To Be Announced</label>
+                </div>
+                {!formData.isLocationTBA && (
+                  <input 
+                    value={formData.location || ""}
+                    onChange={e => setFormData({...formData, location: e.target.value})}
+                    placeholder="e.g. Auditorium, RIT"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                  />
+                )}
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium mb-1">Type</label>
-              <input 
+              <select 
                 required
                 value={formData.type}
                 onChange={e => setFormData({ ...formData, type: e.target.value })}
-                placeholder="e.g. Workshop"
                 className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
-              />
+              >
+                <option value="Main Event">Main Event</option>
+                <option value="Study Jam">Study Jam</option>
+                <option value="Competition">Competition</option>
+                <option value="Hackathon">Hackathon</option>
+                <option value="Online Session">Online Session</option>
+                <option value="Workshop">Workshop</option>
+                <option value="Info Session">Info Session</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium mb-1">Description</label>
@@ -165,7 +224,104 @@ export function EventManager() {
                 <option value="var(--accent-yellow)">Yellow</option>
               </select>
             </div>
+            
+            <div className="col-span-2 border-t border-border/50 pt-4 mt-2">
+              <label className="block text-sm font-medium mb-2">Registration Type</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="regType" 
+                    value="individual" 
+                    checked={!formData.registrationType || formData.registrationType === "individual"} 
+                    onChange={() => setFormData({...formData, registrationType: "individual"})} 
+                    className="accent-foreground"
+                  />
+                  <span className="text-sm">Individual</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    name="regType" 
+                    value="team" 
+                    checked={formData.registrationType === "team"} 
+                    onChange={() => setFormData({...formData, registrationType: "team"})} 
+                    className="accent-foreground"
+                  />
+                  <span className="text-sm">Team</span>
+                </label>
+              </div>
+              
+              {formData.registrationType === "team" && (
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className="block text-xs text-muted mb-1">Min Team Size (incl. leader)</label>
+                    <input 
+                      type="number" min="2" max="20"
+                      value={formData.minTeamSize || 2}
+                      onChange={e => setFormData({...formData, minTeamSize: parseInt(e.target.value)})}
+                      className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted mb-1">Max Team Size (incl. leader)</label>
+                    <input 
+                      type="number" min="2" max="20"
+                      value={formData.maxTeamSize || 4}
+                      onChange={e => setFormData({...formData, maxTeamSize: parseInt(e.target.value)})}
+                      className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+          
+          {formData.status === "closed" && (
+            <div className="space-y-4 border-t border-border/50 pt-4 mt-2">
+              <h4 className="font-bold text-sm text-accent-blue uppercase tracking-wider">Post-Event Details</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">1st Place Winner</label>
+                  <input 
+                    value={formData.winner1 || ""}
+                    onChange={e => setFormData({ ...formData, winner1: e.target.value })}
+                    placeholder="Name or Team"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">2nd Place Winner</label>
+                  <input 
+                    value={formData.winner2 || ""}
+                    onChange={e => setFormData({ ...formData, winner2: e.target.value })}
+                    placeholder="Name or Team"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">3rd Place Winner</label>
+                  <input 
+                    value={formData.winner3 || ""}
+                    onChange={e => setFormData({ ...formData, winner3: e.target.value })}
+                    placeholder="Name or Team"
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium mb-1">Google Drive Link (Gallery)</label>
+                <input 
+                  type="url"
+                  value={formData.galleryLink || ""}
+                  onChange={e => setFormData({ ...formData, galleryLink: e.target.value })}
+                  placeholder="https://drive.google.com/..."
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                />
+                <p className="text-xs text-muted mt-1">If provided, this link will be shown as a "View Gallery" button for students on the past events page.</p>
+              </div>
+            </div>
+          )}
           
           <div className="flex justify-end gap-3 pt-4 border-t border-border/70">
             <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 text-sm font-medium text-muted hover:text-foreground">Cancel</button>

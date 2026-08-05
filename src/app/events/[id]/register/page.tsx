@@ -17,6 +17,23 @@ export default function EventRegistrationPage() {
   const [eventData, setEventData] = useState<any>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+  
+  const [teamName, setTeamName] = useState("");
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (userProfile && teamMembers.length === 0) {
+      setTeamMembers([{
+        name: userProfile.name,
+        email: userProfile.email,
+        phone: userProfile.phone,
+        collegeEmail: userProfile.collegeEmail || "",
+        course: userProfile.course,
+        branch: userProfile.branch,
+        year: userProfile.year,
+      }]);
+    }
+  }, [userProfile]);
 
   useEffect(() => {
     if (id) {
@@ -57,16 +74,40 @@ export default function EventRegistrationPage() {
     e.preventDefault();
     if (!user || !userProfile || !eventData) return;
     
+    if (eventData.registrationType === "team") {
+      if (!teamName.trim()) {
+        alert("Please provide a team name.");
+        return;
+      }
+      if (teamMembers.length < (eventData.minTeamSize || 2)) {
+        alert(`You need at least ${eventData.minTeamSize || 2} members to form a team.`);
+        return;
+      }
+      for (let i = 1; i < teamMembers.length; i++) {
+        const m = teamMembers[i];
+        if (!m.name || !m.phone || !m.course || !m.branch || !m.year) {
+          alert(`Please fill out all required fields for Team Member ${i + 1}`);
+          return;
+        }
+      }
+    }
+
     setIsRegistering(true);
     try {
-      // Save entire profile embedded in the event registration
       const regRef = doc(db, `registrations_${eventData.id}`, user.uid);
-      await setDoc(regRef, {
+      
+      const regData: any = {
         eventId: eventData.id,
         eventTitle: eventData.title,
         userId: user.uid,
         registeredAt: new Date().toISOString(),
-        userProfile: {
+      };
+
+      if (eventData.registrationType === "team") {
+        regData.teamName = teamName;
+        regData.teamMembers = teamMembers;
+      } else {
+        regData.userProfile = {
           uid: userProfile.uid,
           name: userProfile.name,
           email: userProfile.email,
@@ -75,8 +116,10 @@ export default function EventRegistrationPage() {
           course: userProfile.course,
           branch: userProfile.branch,
           year: userProfile.year,
-        }
-      });
+        };
+      }
+
+      await setDoc(regRef, regData);
       setIsRegistered(true);
       alert(`Successfully registered for ${eventData.title}!`);
       router.push(`/events/${eventData.id}`);
@@ -120,41 +163,151 @@ export default function EventRegistrationPage() {
             </div>
           ) : (
             <form onSubmit={handleConfirmRegistration}>
-              <h3 className="text-xl font-bold mb-6">Participant Details</h3>
-              <p className="text-sm text-muted mb-8">The following details will be sent to the event organizers. If anything is incorrect, please request an edit on your profile page.</p>
+              
+              {eventData.registrationType === "team" ? (
+                <>
+                  <h3 className="text-xl font-bold mb-4">Team Registration</h3>
+                  <div className="mb-8">
+                    <label className="text-sm font-bold mb-2 block">Team Name *</label>
+                    <input 
+                      required
+                      value={teamName}
+                      onChange={(e) => setTeamName(e.target.value)}
+                      placeholder="e.g. Code Ninjas"
+                      className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:outline-none"
+                    />
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                <div>
-                  <label className="text-xs text-muted font-medium mb-1 block">Full Name</label>
-                  <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">
-                    {userProfile.name}
+                  <div className="space-y-8 mb-10">
+                    {teamMembers.map((member, index) => (
+                      <div key={index} className="p-6 rounded-2xl border border-border/70 bg-background/30 relative">
+                        {index > 0 && (
+                          <button 
+                            type="button" 
+                            onClick={() => {
+                              const newMembers = [...teamMembers];
+                              newMembers.splice(index, 1);
+                              setTeamMembers(newMembers);
+                            }}
+                            className="absolute top-4 right-4 text-xs font-bold text-accent-red hover:bg-accent-red/10 px-2 py-1 rounded"
+                          >
+                            Remove
+                          </button>
+                        )}
+                        <h4 className="font-bold mb-4 flex items-center gap-2">
+                          <span className="flex items-center justify-center h-6 w-6 rounded-full bg-foreground text-background text-xs">{index + 1}</span>
+                          {index === 0 ? "Team Leader (You)" : `Team Member ${index + 1}`}
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs text-muted font-medium mb-1 block">Full Name</label>
+                            {index === 0 ? (
+                              <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">{member.name}</div>
+                            ) : (
+                              <input required value={member.name || ""} onChange={(e) => { const m = [...teamMembers]; m[index].name = e.target.value; setTeamMembers(m); }} className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:outline-none" />
+                            )}
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted font-medium mb-1 block">Phone Number</label>
+                            {index === 0 ? (
+                              <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">{member.phone}</div>
+                            ) : (
+                              <input required value={member.phone || ""} onChange={(e) => { const m = [...teamMembers]; m[index].phone = e.target.value; setTeamMembers(m); }} className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:outline-none" />
+                            )}
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="text-xs text-muted font-medium mb-1 block">College Email</label>
+                            {index === 0 ? (
+                              <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">{member.collegeEmail || "Missing"}</div>
+                            ) : (
+                              <input value={member.collegeEmail || ""} onChange={(e) => { const m = [...teamMembers]; m[index].collegeEmail = e.target.value; setTeamMembers(m); }} className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:outline-none" />
+                            )}
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted font-medium mb-1 block">Course</label>
+                            {index === 0 ? (
+                              <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">{member.course}</div>
+                            ) : (
+                              <input required value={member.course || ""} placeholder="e.g. B.Tech" onChange={(e) => { const m = [...teamMembers]; m[index].course = e.target.value; setTeamMembers(m); }} className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:outline-none" />
+                            )}
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted font-medium mb-1 block">Branch</label>
+                            {index === 0 ? (
+                              <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">{member.branch}</div>
+                            ) : (
+                              <input required value={member.branch || ""} placeholder="e.g. CSE" onChange={(e) => { const m = [...teamMembers]; m[index].branch = e.target.value; setTeamMembers(m); }} className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:outline-none" />
+                            )}
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="text-xs text-muted font-medium mb-1 block">Year of Study</label>
+                            {index === 0 ? (
+                              <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">{member.year}</div>
+                            ) : (
+                              <select required value={member.year || ""} onChange={(e) => { const m = [...teamMembers]; m[index].year = e.target.value; setTeamMembers(m); }} className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:outline-none">
+                                <option value="">Select Year</option>
+                                <option value="1st Year">1st Year</option>
+                                <option value="2nd Year">2nd Year</option>
+                                <option value="3rd Year">3rd Year</option>
+                                <option value="4th Year">4th Year</option>
+                              </select>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {teamMembers.length < (eventData.maxTeamSize || 4) && (
+                      <button 
+                        type="button" 
+                        onClick={() => setTeamMembers([...teamMembers, { name: "", phone: "", collegeEmail: "", course: "", branch: "", year: "" }])}
+                        className="w-full py-4 border-2 border-dashed border-border/70 rounded-2xl text-sm font-bold text-muted hover:text-foreground hover:border-foreground/50 transition-colors"
+                      >
+                        + Add Team Member
+                      </button>
+                    )}
                   </div>
-                </div>
-                <div>
-                  <label className="text-xs text-muted font-medium mb-1 block">Phone Number</label>
-                  <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">
-                    {userProfile.phone}
+                </>
+              ) : (
+                <>
+                  <h3 className="text-xl font-bold mb-6">Participant Details</h3>
+                  <p className="text-sm text-muted mb-8">The following details will be sent to the event organizers. If anything is incorrect, please request an edit on your profile page.</p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                    <div>
+                      <label className="text-xs text-muted font-medium mb-1 block">Full Name</label>
+                      <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">
+                        {userProfile.name}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted font-medium mb-1 block">Phone Number</label>
+                      <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">
+                        {userProfile.phone}
+                      </div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs text-muted font-medium mb-1 block">College Email</label>
+                      <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">
+                        {userProfile.collegeEmail || "Missing"}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted font-medium mb-1 block">Course & Branch</label>
+                      <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">
+                        {userProfile.course} - {userProfile.branch}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted font-medium mb-1 block">Year of Study</label>
+                      <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">
+                        {userProfile.year}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-xs text-muted font-medium mb-1 block">College Email</label>
-                  <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">
-                    {userProfile.collegeEmail || "Missing"}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-muted font-medium mb-1 block">Course & Branch</label>
-                  <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">
-                    {userProfile.course} - {userProfile.branch}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-muted font-medium mb-1 block">Year of Study</label>
-                  <div className="w-full rounded-lg border border-border bg-background/50 px-4 py-2.5 text-sm cursor-not-allowed text-foreground/70">
-                    {userProfile.year}
-                  </div>
-                </div>
-              </div>
+                </>
+              )}
 
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between border-t border-border/70 pt-8">
                 <Link href={`/events/${eventData.id}`} className="text-sm text-muted hover:text-foreground">
