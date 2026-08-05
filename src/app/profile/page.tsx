@@ -146,6 +146,8 @@ export default function ProfilePage() {
   };
 
   const startAdminEdit = () => {
+    if (!userProfile) return;
+    
     setAdminFormData({
       phone: userProfile.phone || "",
       collegeEmail: userProfile.collegeEmail || "",
