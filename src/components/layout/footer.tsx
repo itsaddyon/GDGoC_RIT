@@ -15,21 +15,38 @@ export function Footer() {
 
   useEffect(() => {
     let keyBuffer = "";
-    const target = "adarsh";
+    const targetAdarsh = "adarsh";
+    const targetAdmin = "admin";
+    const maxLength = Math.max(targetAdarsh.length, targetAdmin.length);
+    
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!e.key) return;
-      keyBuffer += e.key.toLowerCase();
-      if (keyBuffer.length > target.length) {
-        keyBuffer = keyBuffer.slice(-target.length);
+      
+      // Ignore if user is typing in an input field or textarea
+      if (
+        e.target instanceof HTMLInputElement || 
+        e.target instanceof HTMLTextAreaElement || 
+        e.target instanceof HTMLSelectElement
+      ) {
+        return;
       }
-      if (keyBuffer === target) {
+      
+      keyBuffer += e.key.toLowerCase();
+      if (keyBuffer.length > maxLength) {
+        keyBuffer = keyBuffer.slice(-maxLength);
+      }
+      
+      if (keyBuffer.endsWith(targetAdarsh)) {
         setShowSecret(true);
+        keyBuffer = "";
+      } else if (keyBuffer.endsWith(targetAdmin)) {
+        router.push("/admin");
         keyBuffer = "";
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (showSecret) {
