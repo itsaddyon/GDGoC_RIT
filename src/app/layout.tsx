@@ -34,14 +34,6 @@ export const metadata: Metadata = {
     title: "GDG on Campus RIT Roorkee",
     description: "A student developer community at Roorkee Institute of Technology building with Google technologies. Learn, build, and grow together.",
     siteName: "GDG on Campus RIT Roorkee",
-    images: [
-      {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "GDG on Campus RIT Roorkee Preview",
-      },
-    ],
     locale: "en_US",
     type: "website",
   },
@@ -49,7 +41,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "GDG on Campus RIT Roorkee",
     description: "A student developer community at Roorkee Institute of Technology building with Google technologies.",
-    images: ["/og-image.jpg"],
   },
 };
 

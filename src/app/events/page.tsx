@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { UpcomingEvents } from "@/components/sections/upcoming-events";
+import { PastEvents } from "@/components/sections/past-events";
 import { Cta } from "@/components/sections/cta";
 import { Footer } from "@/components/layout/footer";
 
@@ -13,6 +14,7 @@ export default function EventsPage() {
       
       <div className="flex-1">
         <UpcomingEvents showViewAll={false} />
+        <PastEvents />
         <Cta />
       </div>
       

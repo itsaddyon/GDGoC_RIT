@@ -15,13 +15,25 @@ export default function ProfilePage() {
   const [requestSent, setRequestSent] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [requestedChanges, setRequestedChanges] = useState("");
+  const [editField, setEditField] = useState<"phone" | "collegeEmail" | "course" | "branch" | "year">("phone");
+  const [newValue, setNewValue] = useState("");
+  const [editReason, setEditReason] = useState("");
   const [isSavingRole, setIsSavingRole] = useState(false);
   const [github, setGithub] = useState("");
   const [linkedin, setLinkedin] = useState("");
   const [twitter, setTwitter] = useState("");
   const [instagram, setInstagram] = useState("");
   const [isSavingSocial, setIsSavingSocial] = useState(false);
+  
+  const [isEditingAdmin, setIsEditingAdmin] = useState(false);
+  const [isSavingAdminEdit, setIsSavingAdminEdit] = useState(false);
+  const [adminFormData, setAdminFormData] = useState({
+    phone: "",
+    collegeEmail: "",
+    course: "",
+    branch: "",
+    year: ""
+  });
 
   useEffect(() => {
     if (userProfile) {
@@ -54,23 +66,32 @@ export default function ProfilePage() {
 
   const handleEditRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !requestedChanges.trim()) {
-      alert("Please specify what you want to change.");
+    if (!user || !userProfile) return;
+    
+    if (!newValue.trim() || !editReason.trim()) {
+      alert("Please provide the new value and a reason for the change.");
       return;
     }
     
     setIsRequesting(true);
     try {
+      const oldValue = userProfile[editField] || "";
+      
       await setDoc(doc(db, "profile_edit_requests", user.uid), {
         userId: user.uid,
-        name: userProfile?.name,
-        email: userProfile?.email,
-        requestedChanges: requestedChanges.trim(),
+        name: userProfile.name,
+        email: userProfile.email,
+        field: editField,
+        oldValue: oldValue,
+        newValue: newValue.trim(),
+        reason: editReason.trim(),
         requestedAt: new Date().toISOString(),
         status: "pending"
       });
       setRequestSent(true);
       setShowForm(false);
+      setNewValue("");
+      setEditReason("");
       alert("Edit request sent! The core team will review it shortly.");
     } catch (error) {
       console.error("Error sending request:", error);
@@ -124,6 +145,36 @@ export default function ProfilePage() {
     }
   };
 
+  const startAdminEdit = () => {
+    if (!userProfile) return;
+    
+    setAdminFormData({
+      phone: userProfile.phone || "",
+      collegeEmail: userProfile.collegeEmail || "",
+      course: userProfile.course || "",
+      branch: userProfile.branch || "",
+      year: userProfile.year || ""
+    });
+    setIsEditingAdmin(true);
+  };
+
+  const handleAdminEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setIsSavingAdminEdit(true);
+    try {
+      await setDoc(doc(db, "users", user.uid), adminFormData, { merge: true });
+      await refreshProfile();
+      setIsEditingAdmin(false);
+      alert("Profile details updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile.");
+    } finally {
+      setIsSavingAdminEdit(false);
+    }
+  };
+
   if (loading || !user) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -162,24 +213,113 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-            <div>
-              <p className="text-sm font-medium text-muted mb-1">Phone Number</p>
-              <p className="text-lg font-medium">{userProfile.phone}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted mb-1">College Email</p>
-              <p className="text-lg font-medium">{userProfile.collegeEmail || "Not Provided"}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted mb-1">Course & Branch</p>
-              <p className="text-lg font-medium">{userProfile.course} in {userProfile.branch}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted mb-1">Year of Study</p>
-              <p className="text-lg font-medium">{userProfile.year}</p>
-            </div>
+          <div className="flex justify-between items-end mb-6">
+            <h3 className="text-xl font-bold">Personal Details</h3>
+            {(userProfile.role === "admin" || userProfile.role === "core") && !isEditingAdmin && (
+              <button 
+                onClick={startAdminEdit}
+                className="text-sm font-medium text-accent-blue hover:underline"
+              >
+                Edit Details
+              </button>
+            )}
           </div>
+
+          {isEditingAdmin ? (
+            <form onSubmit={handleAdminEditSave} className="mb-10 bg-surface/50 p-6 rounded-2xl border border-border/70">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1">Phone Number</label>
+                  <input 
+                    type="text"
+                    required
+                    value={adminFormData.phone}
+                    onChange={e => setAdminFormData({...adminFormData, phone: e.target.value})}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:border-accent-blue"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1">College Email</label>
+                  <input 
+                    type="email"
+                    required
+                    value={adminFormData.collegeEmail}
+                    onChange={e => setAdminFormData({...adminFormData, collegeEmail: e.target.value})}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:border-accent-blue"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1">Course</label>
+                  <input 
+                    type="text"
+                    required
+                    value={adminFormData.course}
+                    onChange={e => setAdminFormData({...adminFormData, course: e.target.value})}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:border-accent-blue"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1">Branch</label>
+                  <input 
+                    type="text"
+                    required
+                    value={adminFormData.branch}
+                    onChange={e => setAdminFormData({...adminFormData, branch: e.target.value})}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:border-accent-blue"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1">Year of Study</label>
+                  <select 
+                    required
+                    value={adminFormData.year}
+                    onChange={e => setAdminFormData({...adminFormData, year: e.target.value})}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:border-accent-blue"
+                  >
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setIsEditingAdmin(false)}
+                  className="rounded-full px-6 py-2 text-sm font-medium text-muted hover:text-foreground"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isSavingAdminEdit}
+                  className="rounded-full bg-accent-blue px-6 py-2 text-sm font-medium text-white hover:scale-[1.02] transition-transform disabled:opacity-50"
+                >
+                  {isSavingAdminEdit ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+              <div>
+                <p className="text-sm font-medium text-muted mb-1">Phone Number</p>
+                <p className="text-lg font-medium">{userProfile.phone}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted mb-1">College Email</p>
+                <p className="text-lg font-medium">{userProfile.collegeEmail || "Not Provided"}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted mb-1">Course & Branch</p>
+                <p className="text-lg font-medium">{userProfile.course} in {userProfile.branch}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted mb-1">Year of Study</p>
+                <p className="text-lg font-medium">{userProfile.year}</p>
+              </div>
+            </div>
+          )}
 
           {(userProfile.role === "admin" || userProfile.role === "core") && (
             <div className="rounded-2xl bg-accent-blue/10 p-6 border border-accent-blue/20 mb-10">
@@ -283,23 +423,62 @@ export default function ProfilePage() {
                   onClick={() => setShowForm(true)}
                   className="shrink-0 rounded-full border border-border px-6 py-2 text-sm font-medium hover:bg-surface-raised transition-colors"
                 >
-                  Request Edit Access
+                  Request edit in profile
                 </button>
               ) : null}
             </div>
 
             {showForm && !requestSent && (
-              <form onSubmit={handleEditRequest} className="mt-6 pt-6 border-t border-border/70">
-                <label className="block text-sm font-medium mb-2">What would you like to change?</label>
-                <textarea 
-                  required
-                  rows={3}
-                  placeholder="e.g., I need to update my phone number to 9876543210..."
-                  value={requestedChanges}
-                  onChange={(e) => setRequestedChanges(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-accent-blue focus:outline-none mb-4 resize-none"
-                />
-                <div className="flex gap-3 justify-end">
+              <form onSubmit={handleEditRequest} className="mt-6 pt-6 border-t border-border/70 flex flex-col gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">What would you like to change?</label>
+                  <select 
+                    value={editField}
+                    onChange={(e) => {
+                      setEditField(e.target.value as any);
+                      setNewValue("");
+                    }}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:border-accent-blue focus:outline-none"
+                  >
+                    <option value="phone">Phone Number</option>
+                    <option value="collegeEmail">College Email</option>
+                    <option value="course">Course</option>
+                    <option value="branch">Branch / Specialization</option>
+                    <option value="year">Year of Study</option>
+                  </select>
+                </div>
+
+                <div className="p-3 bg-background rounded-lg border border-border/50 text-sm flex flex-col gap-1">
+                  <span className="text-muted text-xs font-bold uppercase tracking-wider">Current Value</span>
+                  <span className="font-medium text-foreground">{userProfile[editField] || "Not Set"}</span>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">New Value</label>
+                  <input 
+                    type="text"
+                    required
+                    value={newValue}
+                    onChange={(e) => setNewValue(e.target.value)}
+                    placeholder="Enter the correct value..."
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:border-accent-blue focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Reason for change <span className="text-accent-red">*</span></label>
+                  <textarea 
+                    required
+                    rows={2}
+                    placeholder="Please explain why you are requesting this change..."
+                    value={editReason}
+                    onChange={(e) => setEditReason(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:border-accent-blue focus:outline-none resize-none"
+                  />
+                  <p className="text-xs text-muted mt-1">A valid reason is required for the core team to approve your request.</p>
+                </div>
+
+                <div className="flex gap-3 justify-end mt-2">
                   <button 
                     type="button" 
                     onClick={() => setShowForm(false)}

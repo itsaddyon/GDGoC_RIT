@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
@@ -13,6 +14,7 @@ import { useAuth } from "@/contexts/auth-context";
 export function NavBar() {
   const [open, setOpen] = useState(false);
   const { user, userProfile, logout } = useAuth();
+  const pathname = usePathname();
 
   return (
     <motion.header
@@ -65,7 +67,7 @@ export function NavBar() {
             </div>
           ) : (
             <Link
-              href="/login"
+              href={`/login?redirect=${pathname}`}
               className="text-sm text-muted transition-colors hover:text-foreground"
             >
               Log in
@@ -135,7 +137,7 @@ export function NavBar() {
                   <button onClick={() => { logout(); setOpen(false); }} className="text-sm text-muted text-left hover:text-accent-red">Sign out</button>
                 </>
               ) : (
-                <Link href="/login" className="text-sm text-muted">Log in</Link>
+                <Link href={`/login?redirect=${pathname}`} className="text-sm text-muted">Log in</Link>
               )}
               <Link
               href="https://gdg.community.dev/gdg-on-campus-roorkee-institute-of-technology-roorkee-india/"

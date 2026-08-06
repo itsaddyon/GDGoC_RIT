@@ -45,12 +45,33 @@ export default function CompleteProfilePage() {
 
     setIsSubmitting(true);
     try {
+      const formattedEmail = collegeEmail.trim().toLowerCase();
+      
+      // Query to check if the college email is already used by another user
+      const { collection, query, where, getDocs } = await import("firebase/firestore");
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("collegeEmail", "==", formattedEmail));
+      const querySnapshot = await getDocs(q);
+      
+      let isDuplicate = false;
+      querySnapshot.forEach((doc) => {
+        if (doc.id !== user.uid) {
+          isDuplicate = true;
+        }
+      });
+      
+      if (isDuplicate) {
+        alert("This college email is already registered, try logging in.");
+        setIsSubmitting(false);
+        return;
+      }
+
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         email: user.email, // personal email from Google auth
         name: user.displayName,
         phone,
-        collegeEmail: collegeEmail.trim().toLowerCase(),
+        collegeEmail: formattedEmail,
         course,
         branch,
         year,

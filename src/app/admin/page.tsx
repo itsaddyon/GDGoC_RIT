@@ -16,7 +16,10 @@ type ProfileRequest = {
   userId: string;
   name: string;
   email: string;
-  requestedChanges: string;
+  field: string;
+  oldValue: string;
+  newValue: string;
+  reason: string;
   requestedAt: string;
   status: "pending" | "approved" | "rejected";
 };
@@ -28,6 +31,16 @@ type EventRegistration = {
   userId: string;
   registeredAt: string;
   userProfile?: UserProfile;
+  teamName?: string;
+  teamMembers?: Array<{
+    name: string;
+    email: string;
+    phone: string;
+    collegeEmail: string;
+    course: string;
+    branch: string;
+    year: string;
+  }>;
 };
 
 export default function AdminDashboard() {
@@ -57,7 +70,12 @@ export default function AdminDashboard() {
       // 2. Fetch all new flat registrations dynamically
       const grouped: Record<string, { eventTitle: string, regs: EventRegistration[] }> = {};
       
-      await Promise.all(EVENTS.map(async (event) => {
+      // Fetch all events from Firestore to ensure we include dynamically created ones
+      const eventsSnap = await getDocs(collection(db, "events"));
+      const dbEvents: any[] = [];
+      eventsSnap.forEach((d) => dbEvents.push({ id: d.id, ...d.data() }));
+
+      await Promise.all(dbEvents.map(async (event) => {
         const regsSnap = await getDocs(collection(db, `registrations_${event.id}`));
         if (!regsSnap.empty) {
           grouped[event.id] = { eventTitle: event.title, regs: [] };
@@ -86,27 +104,26 @@ export default function AdminDashboard() {
     }
   }, [userProfile]);
 
-  const handleRequestAction = async (userId: string, action: "approve" | "reject") => {
+  const handleRequestAction = async (request: ProfileRequest, action: "approve" | "reject") => {
     if (!confirm(`Are you sure you want to ${action} this request?`)) return;
     
     try {
-      const reqRef = doc(db, "profile_edit_requests", userId);
+      const reqRef = doc(db, "profile_edit_requests", request.userId);
       
       if (action === "approve") {
-        // Just delete the request to allow them to edit again, 
-        // OR we could redirect them to an edit page. 
-        // Based on the user's workflow, deleting the lock is sufficient if we build an edit page.
-        // Actually, let's just delete the request document. It signals the request is resolved.
-        // In the future, we can email them.
+        // Automatically update the user's profile with the new value
+        await updateDoc(doc(db, "users", request.userId), {
+          [request.field]: request.newValue
+        });
         await deleteDoc(reqRef);
-        alert("Request approved (lock removed).");
+        alert(`Request approved. User's ${request.field} was updated to ${request.newValue}.`);
       } else {
         await deleteDoc(reqRef);
         alert("Request rejected.");
       }
       
       // Refresh list
-      setProfileRequests(prev => prev.filter(r => r.userId !== userId));
+      setProfileRequests(prev => prev.filter(r => r.userId !== request.userId));
     } catch (error) {
       console.error("Error handling request:", error);
       alert("Failed to process request.");
@@ -256,20 +273,38 @@ export default function AdminDashboard() {
                         <p className="text-sm text-muted mb-3">{req.email} • Requested on {new Date(req.requestedAt).toLocaleDateString()}</p>
                         
                         <div className="bg-surface rounded-lg p-3 border border-border/50">
-                          <p className="text-xs text-muted font-bold uppercase tracking-wider mb-1">Requested Changes:</p>
-                          <p className="text-sm">{req.requestedChanges}</p>
+                          <div className="flex gap-2 items-center mb-2">
+                            <span className="text-xs text-muted font-bold uppercase tracking-wider">Field to Change:</span>
+                            <span className="text-sm font-medium bg-foreground/10 px-2 py-0.5 rounded text-foreground">{req.field}</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 mb-3 p-3 bg-background rounded border border-border/30">
+                            <div>
+                              <p className="text-[10px] text-muted font-bold uppercase mb-1">Old Value</p>
+                              <p className="text-sm line-through text-muted/70">{req.oldValue || "Not Set"}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-accent-green font-bold uppercase mb-1">New Value</p>
+                              <p className="text-sm font-medium text-accent-green">{req.newValue}</p>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <p className="text-xs text-muted font-bold uppercase tracking-wider mb-1">Reason for change:</p>
+                            <p className="text-sm text-foreground/90 italic border-l-2 border-accent-blue/50 pl-3 py-1">{req.reason}</p>
+                          </div>
                         </div>
                       </div>
                       
                       <div className="flex items-center gap-3 shrink-0">
                           <button 
-                            onClick={() => handleRequestAction(req.userId, "approve")}
+                            onClick={() => handleRequestAction(req, "approve")}
                             className="rounded-full bg-accent-green/10 text-accent-green border border-accent-green/20 px-4 py-2 text-sm font-bold hover:bg-accent-green/20 transition-colors"
                           >
                             Approve
                           </button>
                           <button 
-                            onClick={() => handleRequestAction(req.userId, "reject")}
+                            onClick={() => handleRequestAction(req, "reject")}
                             className="rounded-full bg-accent-red/10 text-accent-red border border-accent-red/20 px-4 py-2 text-sm font-bold hover:bg-accent-red/20 transition-colors"
                           >
                             Reject
@@ -315,22 +350,52 @@ export default function AdminDashboard() {
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-border/30">
-                              {group.regs.map((reg, i) => (
-                                <tr key={i} className="hover:bg-surface/80 transition-colors">
-                                  <td className="px-6 py-4">
-                                    <div className="font-medium text-foreground">{reg.userProfile?.name || "Unknown"}</div>
-                                    <div className="text-xs text-muted">{reg.userProfile?.email}</div>
-                                  </td>
-                                  <td className="px-6 py-4">{reg.userProfile?.phone || "N/A"}</td>
-                                  <td className="px-6 py-4">
-                                    <div className="text-foreground">{reg.userProfile?.course} {reg.userProfile?.branch}</div>
-                                    <div className="text-xs text-muted">{reg.userProfile?.year}</div>
-                                  </td>
-                                  <td className="px-6 py-4 text-muted">
-                                    {new Date(reg.registeredAt).toLocaleDateString()}
-                                  </td>
-                                </tr>
-                              ))}
+                              {group.regs.map((reg, i) => {
+                                if (reg.teamName && reg.teamMembers) {
+                                  return (
+                                    <tr key={i} className="hover:bg-surface/80 transition-colors">
+                                      <td className="px-6 py-6" colSpan={4}>
+                                        <div className="mb-4 inline-block rounded-md bg-accent-blue/10 px-3 py-1.5 text-xs font-bold text-accent-blue uppercase tracking-wider">
+                                          Team: {reg.teamName}
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-2">
+                                          {reg.teamMembers.map((member, idx) => (
+                                            <div key={idx} className="rounded-xl border border-border/50 bg-background/50 p-4 text-sm">
+                                              <div className="font-bold flex items-center gap-2 mb-2">
+                                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground text-background text-[10px]">{idx + 1}</span>
+                                                <span className="truncate">{member.name}</span> {idx === 0 && <span className="shrink-0 text-[10px] uppercase font-bold text-accent-yellow ml-1">(Leader)</span>}
+                                              </div>
+                                              <div className="mt-1 text-xs text-muted truncate">{member.email || member.collegeEmail}</div>
+                                              <div className="mt-1 text-xs">{member.phone}</div>
+                                              <div className="mt-2 text-xs text-muted font-medium bg-surface py-1 px-2 rounded">{member.course} {member.branch} • {member.year}</div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                        <div className="mt-4 text-xs font-medium text-muted">
+                                          Registered: {new Date(reg.registeredAt).toLocaleDateString()}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )
+                                }
+
+                                return (
+                                  <tr key={i} className="hover:bg-surface/80 transition-colors">
+                                    <td className="px-6 py-4">
+                                      <div className="font-medium text-foreground">{reg.userProfile?.name || "Unknown"}</div>
+                                      <div className="text-xs text-muted">{reg.userProfile?.email}</div>
+                                    </td>
+                                    <td className="px-6 py-4">{reg.userProfile?.phone || "N/A"}</td>
+                                    <td className="px-6 py-4">
+                                      <div className="text-foreground">{reg.userProfile?.course} {reg.userProfile?.branch}</div>
+                                      <div className="text-xs text-muted">{reg.userProfile?.year}</div>
+                                    </td>
+                                    <td className="px-6 py-4 text-muted">
+                                      {new Date(reg.registeredAt).toLocaleDateString()}
+                                    </td>
+                                  </tr>
+                                )
+                              })}
                             </tbody>
                           </table>
                         </div>
