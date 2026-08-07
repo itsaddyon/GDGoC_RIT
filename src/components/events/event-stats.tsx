@@ -5,19 +5,21 @@ import { Users, Clock3, Award, CalendarDays } from "lucide-react";
 
 type EventStatsProps = {
   type: string;
+  participants?: number;
+  duration?: string;
 };
 
-const stats = (type: string) => [
+const stats = (type: string, participants?: number, duration?: string) => [
   {
     icon: Users,
     title: "Participants",
-    value: "180+",
+    value: participants ? `${participants}+` : "TBA",
     color: "text-blue-500",
   },
   {
     icon: Clock3,
     title: "Duration",
-    value: "4 Hours",
+    value: duration || "TBA",
     color: "text-green-500",
   },
   {
@@ -34,7 +36,7 @@ const stats = (type: string) => [
   },
 ];
 
-export function EventStats({ type }: EventStatsProps) {
+export function EventStats({ type, participants, duration }: EventStatsProps) {
   return (
     <section className="mt-20">
 
@@ -50,7 +52,7 @@ export function EventStats({ type }: EventStatsProps) {
 
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
 
-        {stats(type).map((item, index) => {
+        {stats(type, participants, duration).map((item, index) => {
           const Icon = item.icon;
 
           return (

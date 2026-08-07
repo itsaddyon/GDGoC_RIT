@@ -46,26 +46,10 @@ export function UpcomingEvents({
           ...(doc.data() as Omit<EventType, "id">),
         }));
 
-        // Convert readonly EVENTS into normal array
-        const mergedEvents: EventType[] = EVENTS.map((event) => ({
-          ...event,
-        }));
-
-        firebaseEvents.forEach((event) => {
-          if (!mergedEvents.some((e) => e.id === event.id)) {
-            mergedEvents.push(event);
-          }
-        });
-
-        setEvents(mergedEvents);
+        setEvents(firebaseEvents);
       } catch (err) {
         console.error(err);
-
-        setEvents(
-          EVENTS.map((event) => ({
-            ...event,
-          }))
-        );
+        setEvents([]);
       }
     };
 

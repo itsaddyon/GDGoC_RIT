@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, doc, deleteDoc, updateDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { EVENTS, FAQS, ACHIEVEMENTS, TESTIMONIALS } from "@/data/content";
 import { EventManager } from "@/components/admin/event-manager";
 import { ContentManager } from "@/components/admin/content-manager";
@@ -43,14 +44,18 @@ type EventRegistration = {
   }>;
 };
 
+type UpcomingEventWithCount = any & {
+  registrationCount: number;
+};
+
 export default function AdminDashboard() {
   const { user, userProfile, loading: authLoading, logout } = useAuth();
   const router = useRouter();
   
-  const [activeTab, setActiveTab] = useState<"requests" | "events" | "cms_events" | "cms_content" | "cms_gallery" | "setup">("requests");
+  const [activeTab, setActiveTab] = useState<"requests" | "events" | "cms_events" | "cms_content" | "cms_gallery" | "setup">("events");
   
   const [profileRequests, setProfileRequests] = useState<ProfileRequest[]>([]);
-  const [registrationsByEvent, setRegistrationsByEvent] = useState<Record<string, { eventTitle: string, regs: EventRegistration[] }>>({});
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEventWithCount[]>([]);
   
   const [loading, setLoading] = useState(true);
 
@@ -67,30 +72,27 @@ export default function AdminDashboard() {
       });
       setProfileRequests(reqs.sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()));
 
-      // 2. Fetch all new flat registrations dynamically
-      const grouped: Record<string, { eventTitle: string, regs: EventRegistration[] }> = {};
-      
-      // Fetch all events from Firestore to ensure we include dynamically created ones
+      // 2. Fetch published events and their registration counts
       const eventsSnap = await getDocs(collection(db, "events"));
       const dbEvents: any[] = [];
       eventsSnap.forEach((d) => dbEvents.push({ id: d.id, ...d.data() }));
 
-      await Promise.all(dbEvents.map(async (event) => {
-        const regsSnap = await getDocs(collection(db, `registrations_${event.id}`));
-        if (!regsSnap.empty) {
-          grouped[event.id] = { eventTitle: event.title, regs: [] };
-          regsSnap.forEach((doc) => {
-            grouped[event.id].regs.push(doc.data() as EventRegistration);
-          });
-        }
-      }));
+      const published = dbEvents.filter(e => e.status === "published");
 
-      // Sort each event's registrations by date
-      Object.values(grouped).forEach(group => {
-        group.regs.sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime());
+      const regsSnap = await getDocs(collection(db, "event_registrations"));
+      const regCounts: Record<string, number> = {};
+      regsSnap.forEach(d => {
+        const data = d.data();
+        const eId = data.eventId;
+        if (eId) {
+          regCounts[eId] = (regCounts[eId] || 0) + 1;
+        }
       });
 
-      setRegistrationsByEvent(grouped);
+      setUpcomingEvents(published.map(e => ({
+        ...e,
+        registrationCount: regCounts[e.id] || 0
+      })));
     } catch (error) {
       console.error("Error fetching admin data:", error);
     } finally {
@@ -99,7 +101,7 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    if (userProfile && (userProfile.role === "admin" || userProfile.role === "core")) {
+    if (userProfile && userProfile.role === "admin") {
       fetchAdminData();
     }
   }, [userProfile]);
@@ -174,7 +176,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!userProfile || (userProfile.role !== "admin" && userProfile.role !== "core")) {
+  if (!userProfile || userProfile.role !== "admin") {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-20 text-center">
         <h1 className="text-2xl font-bold text-accent-red mb-2">Access Denied</h1>
@@ -196,19 +198,13 @@ export default function AdminDashboard() {
   return (
     <main className="flex min-h-screen flex-col">
       <PageHeader 
-        title="Core Dashboard" 
+        title="Admin Panel" 
         description="Manage GDGoC RIT operations, profile requests, and event data." 
       />
       <div className="flex-1 container-shell py-12">
         
         {/* Admin Tabs */}
         <div className="flex flex-wrap gap-2 border-b border-border/70 pb-4 mb-8">
-          <button 
-            onClick={() => setActiveTab("requests")}
-            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${activeTab === "requests" ? "bg-foreground text-background" : "hover:bg-surface text-muted"}`}
-          >
-            Profile Edit Requests {profileRequests.length > 0 && <span className="ml-2 bg-accent-red text-white text-[10px] px-2 py-0.5 rounded-full">{profileRequests.length}</span>}
-          </button>
           <button 
             onClick={() => setActiveTab("events")}
             className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${activeTab === "events" ? "bg-foreground text-background" : "hover:bg-surface text-muted"}`}
@@ -235,6 +231,12 @@ export default function AdminDashboard() {
             Gallery
           </button>
           <div className="w-px h-6 bg-border/70 self-center mx-2"></div>
+          <button 
+            onClick={() => setActiveTab("requests")}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${activeTab === "requests" ? "bg-foreground text-background" : "hover:bg-surface text-muted"}`}
+          >
+            Profile Edit Requests {profileRequests.length > 0 && <span className="ml-2 bg-accent-red text-white text-[10px] px-2 py-0.5 rounded-full">{profileRequests.length}</span>}
+          </button>
           <button 
             onClick={() => setActiveTab("setup")}
             className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${activeTab === "setup" ? "bg-foreground text-background" : "hover:bg-surface text-muted"}`}
@@ -320,85 +322,30 @@ export default function AdminDashboard() {
             {/* EVENTS TAB */}
             {activeTab === "events" && (
               <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-bold">Event Registrations</h2>
-                  <button onClick={fetchAdminData} className="text-sm text-accent-blue hover:underline">Refresh</button>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold">Upcoming Event Registrations</h2>
                 </div>
-                
-                {Object.keys(registrationsByEvent).length === 0 ? (
-                  <div className="rounded-2xl border border-border/70 bg-surface/50 p-8 text-center text-muted">
-                    No registrations found.
+
+                {upcomingEvents.length === 0 ? (
+                  <div className="rounded-2xl border border-border/70 bg-surface/50 p-12 text-center">
+                    <p className="text-muted">No upcoming events currently.</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-8">
-                    {Object.entries(registrationsByEvent).map(([eventId, group]) => (
-                      <div key={eventId} className="rounded-2xl border border-border/70 bg-surface/50 overflow-hidden">
-                        <div className="bg-surface border-b border-border/70 px-6 py-4 flex justify-between items-center">
-                          <h3 className="text-lg font-bold">{group.eventTitle}</h3>
-                          <span className="bg-accent-blue/10 text-accent-blue px-3 py-1 rounded-full text-xs font-bold">
-                            {group.regs.length} Students
-                          </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {upcomingEvents.map((event) => (
+                      <div key={event.id} className="rounded-2xl border border-border/70 bg-surface overflow-hidden p-6 hover:border-accent-blue/50 transition-colors flex flex-col justify-between">
+                        <div>
+                          <h3 className="font-bold text-lg">{event.title}</h3>
+                          <div className="mt-3 inline-flex items-center rounded-full bg-accent-blue/10 px-3 py-1 text-xs font-semibold text-accent-blue">
+                            {event.registrationCount} Registered
+                          </div>
                         </div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left text-sm">
-                            <thead className="bg-surface/50 text-muted">
-                              <tr>
-                                <th className="px-6 py-4 font-medium">Student Name</th>
-                                <th className="px-6 py-4 font-medium">Phone</th>
-                                <th className="px-6 py-4 font-medium">Branch & Year</th>
-                                <th className="px-6 py-4 font-medium">Registered At</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border/30">
-                              {group.regs.map((reg, i) => {
-                                if (reg.teamName && reg.teamMembers) {
-                                  return (
-                                    <tr key={i} className="hover:bg-surface/80 transition-colors">
-                                      <td className="px-6 py-6" colSpan={4}>
-                                        <div className="mb-4 inline-block rounded-md bg-accent-blue/10 px-3 py-1.5 text-xs font-bold text-accent-blue uppercase tracking-wider">
-                                          Team: {reg.teamName}
-                                        </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-2">
-                                          {reg.teamMembers.map((member, idx) => (
-                                            <div key={idx} className="rounded-xl border border-border/50 bg-background/50 p-4 text-sm">
-                                              <div className="font-bold flex items-center gap-2 mb-2">
-                                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground text-background text-[10px]">{idx + 1}</span>
-                                                <span className="truncate">{member.name}</span> {idx === 0 && <span className="shrink-0 text-[10px] uppercase font-bold text-accent-yellow ml-1">(Leader)</span>}
-                                              </div>
-                                              <div className="mt-1 text-xs text-muted truncate">{member.email || member.collegeEmail}</div>
-                                              <div className="mt-1 text-xs">{member.phone}</div>
-                                              <div className="mt-2 text-xs text-muted font-medium bg-surface py-1 px-2 rounded">{member.course} {member.branch} • {member.year}</div>
-                                            </div>
-                                          ))}
-                                        </div>
-                                        <div className="mt-4 text-xs font-medium text-muted">
-                                          Registered: {new Date(reg.registeredAt).toLocaleDateString()}
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  )
-                                }
-
-                                return (
-                                  <tr key={i} className="hover:bg-surface/80 transition-colors">
-                                    <td className="px-6 py-4">
-                                      <div className="font-medium text-foreground">{reg.userProfile?.name || "Unknown"}</div>
-                                      <div className="text-xs text-muted">{reg.userProfile?.email}</div>
-                                    </td>
-                                    <td className="px-6 py-4">{reg.userProfile?.phone || "N/A"}</td>
-                                    <td className="px-6 py-4">
-                                      <div className="text-foreground">{reg.userProfile?.course} {reg.userProfile?.branch}</div>
-                                      <div className="text-xs text-muted">{reg.userProfile?.year}</div>
-                                    </td>
-                                    <td className="px-6 py-4 text-muted">
-                                      {new Date(reg.registeredAt).toLocaleDateString()}
-                                    </td>
-                                  </tr>
-                                )
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
+                        <button 
+                          onClick={() => router.push(`/admin/events/${event.id}`)}
+                          className="mt-6 w-full py-2 rounded-xl bg-foreground text-background text-sm font-semibold hover:scale-[1.02] transition-transform flex items-center justify-center gap-2"
+                        >
+                          View Registrations <ArrowRight size={16} />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -415,14 +362,15 @@ export default function AdminDashboard() {
             {activeTab === "setup" && (
               <div className="space-y-6">
                 <h2 className="text-xl font-bold">System Setup & Migration</h2>
-                <div className="rounded-2xl border border-border/70 bg-surface/50 p-8">
-                  <h3 className="font-bold mb-2">Phase 1: Data Migration</h3>
-                  <p className="text-sm text-muted mb-6">
-                    Clicking this button will take all the hardcoded events, FAQs, and achievements from <code>content.ts</code> and push them into Firestore collections. This is required before building the CMS.
+                <div className="rounded-2xl border border-accent-red/50 bg-accent-red/5 p-8 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-accent-red"></div>
+                  <h3 className="font-bold text-accent-red mb-2">⚠️ CAUTION: Phase 1 Data Migration</h3>
+                  <p className="text-sm text-foreground/80 mb-6">
+                    Clicking this button will take all the hardcoded events, FAQs, and achievements from <code>content.ts</code> and push them into Firestore collections. <strong>Do NOT use this unless you are setting up the database for the very first time. It will overwrite existing static data!</strong>
                   </p>
                   <button 
                     onClick={handleMigration}
-                    className="rounded-full bg-accent-blue text-white px-6 py-2 text-sm font-bold hover:scale-[1.02] transition-transform"
+                    className="rounded-full bg-accent-red text-white px-6 py-2 text-sm font-bold hover:scale-[1.02] transition-transform shadow-lg shadow-accent-red/20"
                   >
                     Run Database Migration
                   </button>

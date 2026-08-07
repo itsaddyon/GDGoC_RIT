@@ -8,6 +8,10 @@ type EventHeroProps = {
   type: string;
   date: string;
   color: string;
+  venue?: string;
+  participants?: number;
+  duration?: string;
+  status?: string;
 };
 
 export function EventHero({
@@ -15,6 +19,10 @@ export function EventHero({
   type,
   date,
   color,
+  venue,
+  participants,
+  duration,
+  status,
 }: EventHeroProps) {
   return (
     <section className="relative overflow-hidden rounded-[32px] border border-border/60 bg-gradient-to-br from-surface via-background to-surface px-8 py-16 md:px-14 md:py-24">
@@ -59,24 +67,26 @@ export function EventHero({
 
           <div className="flex items-center gap-2">
             <MapPin size={18} />
-            RIT Roorkee
+            {venue || "TBA"}
           </div>
 
           <div className="flex items-center gap-2">
             <Users size={18} />
-            180+ Participants
+            {participants ? `${participants}+` : "TBA"} Participants
           </div>
 
           <div className="flex items-center gap-2">
             <Clock size={18} />
-            4 Hours
+            {duration || "TBA"}
           </div>
 
         </div>
 
-        <div className="mt-10 inline-flex rounded-full border border-green-500/30 bg-green-500/10 px-5 py-2 text-sm font-semibold text-green-400">
-          ✓ Event Completed
-        </div>
+        {status === "closed" && (
+          <div className="mt-10 inline-flex rounded-full border border-green-500/30 bg-green-500/10 px-5 py-2 text-sm font-semibold text-green-400">
+            ✓ Event Completed
+          </div>
+        )}
 
       </motion.div>
     </section>

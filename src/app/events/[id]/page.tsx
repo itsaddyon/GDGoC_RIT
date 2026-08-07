@@ -16,6 +16,10 @@ import {
   doc,
   getDoc,
   setDoc,
+  collection,
+  query,
+  where,
+  getDocs
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -43,15 +47,18 @@ type EventData = {
   color: string;
 
   venue?: string;
-  duration?: string;
   participants?: number;
-  registrationOpen?: boolean;
-
+  duration?: string;
+  location?: string;
+  isLocationTBA?: boolean;
+  isDateTBA?: boolean;
+  status?: string;
   highlights?: string[];
 
   gallery?: string[];
 
   banner?: string;
+  registrationOpen?: boolean;
 };
 
 export default function EventDetailsPage() {
@@ -59,7 +66,7 @@ export default function EventDetailsPage() {
 
   const router = useRouter();
 
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
 
   const [eventData, setEventData] =
     useState<EventData | null>(null);
@@ -74,56 +81,59 @@ export default function EventDetailsPage() {
 
   useEffect(() => {
     if (!id) return;
-
-    const found = EVENTS.find(
-      (event) => event.id === id
-    ) as EventData | undefined;
-
-    if (found) {
-      setEventData({
-        ...found,
-
-        venue:
-          found.venue ??
-          "Seminar Hall, RIT Roorkee",
-
-        duration:
-          found.duration ??
-          "4 Hours",
-
-        participants:
-          found.participants ??
-          180,
-
-        registrationOpen:
-          found.registrationOpen ??
-          false,
-
-        highlights:
-          found.highlights ?? [
-            "Hands-on Workshop",
-            "Interactive Q&A Session",
-            "Networking Opportunity",
-            "Participation Certificate",
-          ],
-
-        gallery:
-          found.gallery ?? [
-            "/events/default/1.jpg",
-            "/events/default/2.jpg",
-            "/events/default/3.jpg",
-            "/events/default/4.jpg",
-            "/events/default/5.jpg",
-            "/events/default/6.jpg",
-          ],
-
-        banner:
-          found.banner ??
-          "/events/default/banner.jpg",
-      });
-    }
-
-    setLoading(false);
+    
+    const fetchEvent = async () => {
+      try {
+        const docRef = doc(db, "events", id as string);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setEventData({
+            id: docSnap.id,
+            title: data.title || "Untitled Event",
+            desc: data.desc || "",
+            date: data.date || "",
+            type: data.type || "Event",
+            color: data.color || "var(--accent-blue)",
+            
+            venue: data.location || data.venue || "Seminar Hall, RIT Roorkee",
+            duration: data.duration || data.time || "4 Hours",
+            participants: data.participants || 180,
+            registrationOpen: data.status === "published" || data.registrationOpen || false,
+            isDateTBA: data.isDateTBA || false,
+            isLocationTBA: data.isLocationTBA || false,
+            
+            highlights: data.highlights || [
+              "Hands-on Workshop",
+              "Interactive Q&A Session",
+              "Networking Opportunity",
+              "Participation Certificate",
+            ],
+            
+            gallery: data.gallery || [
+              "/events/default/1.jpg",
+              "/events/default/2.jpg",
+              "/events/default/3.jpg",
+              "/events/default/4.jpg",
+              "/events/default/5.jpg",
+              "/events/default/6.jpg",
+            ],
+            
+            banner: data.banner || "/events/default/banner.jpg",
+          });
+        } else {
+          setEventData(null);
+        }
+      } catch (error) {
+        console.error("Error fetching event:", error);
+        setEventData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchEvent();
   }, [id]);
 
   useEffect(() => {
@@ -174,9 +184,8 @@ export default function EventDetailsPage() {
               eventData.title,
 
             userId: user.uid,
-
-            registeredAt:
-              new Date().toISOString(),
+            registeredAt: new Date().toISOString(),
+            userProfile: userProfile || null,
           }
         );
 
@@ -192,13 +201,27 @@ export default function EventDetailsPage() {
       }
     };
 
-  const relatedEvents = useMemo(() => {
-    if (!eventData) return [];
+  const [relatedEvents, setRelatedEvents] = useState<any[]>([]);
 
-    return EVENTS.filter(
-      (event) =>
-        event.id !== eventData.id
-    ).slice(0, 3);
+  useEffect(() => {
+    if (!eventData) return;
+    const fetchRelated = async () => {
+      try {
+        const q = query(
+          collection(db, "events"),
+          where("status", "==", "published")
+        );
+        const snap = await getDocs(q);
+        const evs = snap.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((e) => e.id !== eventData.id)
+          .slice(0, 3);
+        setRelatedEvents(evs);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchRelated();
   }, [eventData]);
 
   if (loading) {
@@ -256,12 +279,20 @@ export default function EventDetailsPage() {
       </section>
 
       {/* Hero */}
-      <section className="container-shell pt-8">
+      <section className="container-shell pt-10">
         <EventHero
           title={eventData.title}
           type={eventData.type}
-          date={eventData.date}
+          date={eventData.isDateTBA ? "Date & Time TBA" : eventData.date ? new Date(eventData.date).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          }) : "Date & Time TBA"}
           color={eventData.color}
+          venue={eventData.isLocationTBA ? "TBA" : eventData.venue}
+          participants={eventData.participants}
+          duration={eventData.duration}
+          status={eventData.status}
         />
       </section>
 
@@ -272,7 +303,7 @@ export default function EventDetailsPage() {
 
           <div className="rounded-full border border-border px-4 py-2 text-sm">
             <Calendar size={15} className="mr-2 inline" />
-            {eventData.date}
+            {eventData.isDateTBA ? "TBA" : eventData.date ? new Date(eventData.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "TBA"}
           </div>
 
           <div className="rounded-full border border-border px-4 py-2 text-sm">
@@ -282,7 +313,7 @@ export default function EventDetailsPage() {
 
           <div className="rounded-full border border-border px-4 py-2 text-sm">
             <MapPin size={15} className="mr-2 inline" />
-            {eventData.venue}
+            {eventData.isLocationTBA ? "TBA" : eventData.venue}
           </div>
 
           <div className="rounded-full border border-border px-4 py-2 text-sm">
@@ -316,7 +347,9 @@ export default function EventDetailsPage() {
       <section className="container-shell mt-20">
         <EventStats
           type={eventData.type}
-/>
+          participants={eventData.participants}
+          duration={eventData.duration}
+        />
       </section>
 
       {/* Highlights */}
@@ -339,6 +372,7 @@ export default function EventDetailsPage() {
   isRegistering={isRegistering}
   isLoggedIn={!!user}
   registrationOpen={eventData.registrationOpen ?? false}
+  userProfile={userProfile}
   onRegister={handleRegister}
 />
       </section>

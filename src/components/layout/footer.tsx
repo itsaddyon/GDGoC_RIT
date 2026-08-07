@@ -12,12 +12,14 @@ export function Footer() {
   const [clickCount, setClickCount] = useState(0);
   const [techTeamClickCount, setTechTeamClickCount] = useState(0);
   const [showSecret, setShowSecret] = useState(false);
+  const [showPortal, setShowPortal] = useState(false);
 
   useEffect(() => {
     let keyBuffer = "";
     const targetAdarsh = "adarsh";
     const targetAdmin = "admin";
-    const maxLength = Math.max(targetAdarsh.length, targetAdmin.length);
+    const targetCore = "core";
+    const maxLength = Math.max(targetAdarsh.length, targetAdmin.length, targetCore.length);
     
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!e.key) return;
@@ -42,6 +44,9 @@ export function Footer() {
       } else if (keyBuffer.endsWith(targetAdmin)) {
         router.push("/admin");
         keyBuffer = "";
+      } else if (keyBuffer.endsWith(targetCore)) {
+        router.push("/core");
+        keyBuffer = "";
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -53,7 +58,7 @@ export function Footer() {
       const timer = setTimeout(() => {
         window.open("https://itsaddyon.dev", "_blank");
         setShowSecret(false);
-      }, 1000);
+      }, 2500);
       return () => clearTimeout(timer);
     }
   }, [showSecret]);
@@ -63,7 +68,7 @@ export function Footer() {
     setClickCount(newCount);
     if (newCount === 5) {
       setClickCount(0);
-      router.push("/admin");
+      setShowPortal(true);
     }
   };
 
@@ -80,6 +85,9 @@ export function Footer() {
 
   return (
     <footer className="border-t border-border/70 bg-background/40">
+      {/* Hidden image to preload the easter egg so it shows up instantly */}
+      <img src={HIDDEN_IMG} alt="" aria-hidden="true" style={{ display: 'none' }} />
+
       <div className="container-shell flex flex-col gap-8 py-14 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-3">
           <div 
@@ -103,11 +111,47 @@ export function Footer() {
       </div>
       <div className="container-shell border-t border-border/70 py-6 text-xs text-muted">
         <div className="text-center">  
-          © {new Date().getFullYear()} {SITE.name}. Built by <span onClick={handleTechTeamClick} className="cursor-pointer select-none hover:text-foreground transition-colors" title="Tech Team">GDG Tech Team</span>, for students.
+          © {new Date().getFullYear()} {SITE.name}. Made by <span onClick={handleTechTeamClick} className="cursor-pointer select-none hover:text-foreground transition-colors" title="GDG">GDG</span>, for students.
         </div>
       </div>
 
       <AnimatePresence>
+        {showPortal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md"
+            onClick={() => setShowPortal(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative p-10 rounded-3xl bg-surface border border-border shadow-2xl flex flex-col items-center gap-6 max-w-sm w-full mx-4"
+            >
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-accent-blue via-accent-red to-accent-yellow bg-clip-text text-transparent">
+                Select Portal
+              </h2>
+              <div className="grid grid-cols-1 w-full gap-4">
+                <button 
+                  onClick={() => { setShowPortal(false); router.push("/admin"); }}
+                  className="w-full py-4 rounded-xl border border-border bg-background hover:border-accent-red hover:bg-accent-red/10 transition-all font-semibold"
+                >
+                  Admin Panel
+                </button>
+                <button 
+                  onClick={() => { setShowPortal(false); router.push("/core"); }}
+                  className="w-full py-4 rounded-xl border border-border bg-background hover:border-accent-blue hover:bg-accent-blue/10 transition-all font-semibold"
+                >
+                  Core Dashboard
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
         {showSecret && (
           <motion.div 
             initial={{ opacity: 0 }}

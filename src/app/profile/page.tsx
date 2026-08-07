@@ -337,6 +337,7 @@ export default function ProfilePage() {
                   <option value="GDG Lead">GDG Lead</option>
                   <option value="Event Manager">Event Manager</option>
                   <option value="Tech Lead">Tech Lead</option>
+                  <option value="Graphic Lead">Graphic Lead</option>
                   <option value="Social Media Lead">Social Media Lead</option>
                   <option value="PR & Outreach">PR & Outreach</option>
                 </select>

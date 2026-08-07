@@ -17,7 +17,15 @@ type EventType = {
   winner3?: string;
   galleryLink?: string;
   location?: string;
+  venue?: string;
   time?: string;
+  duration?: string;
+  participants?: number;
+  registrationOpen?: boolean;
+  banner?: string;
+  gallery?: string[];
+  highlights?: string[];
+  speakers?: { name: string; role: string; image: string }[];
   isDateTBA?: boolean;
   isLocationTBA?: boolean;
   registrationType?: "individual" | "team";
@@ -38,7 +46,11 @@ export function EventManager() {
       const snap = await getDocs(collection(db, "events"));
       const evs: EventType[] = [];
       snap.forEach(d => evs.push(d.data() as EventType));
-      evs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      evs.sort((a, b) => {
+        if (a.isDateTBA && !b.isDateTBA) return -1;
+        if (!a.isDateTBA && b.isDateTBA) return 1;
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
       setEvents(evs);
     } catch (e) {
       console.error(e);
@@ -58,6 +70,32 @@ export function EventManager() {
     // Auto-generate ID if it's new and doesn't have one
     const idToSave = formData.id.trim().toLowerCase().replace(/\s+/g, '-');
     const finalData = { ...formData, id: idToSave };
+
+    if (!finalData.isDateTBA && !finalData.date) {
+      alert("Please provide a Date, or check 'Date & Time To Be Announced'.");
+      return;
+    }
+
+    if (!finalData.isLocationTBA && !finalData.location) {
+      alert("Please provide a Venue/Location, or check 'Location To Be Announced'.");
+      return;
+    }
+
+    if (finalData.status === "closed") {
+      const g = finalData.gallery || [];
+      if (g.length < 2 || g.length > 4) {
+        const linksStr = window.prompt("To close this event, please provide 2 to 4 image Drive Links (separated by commas):");
+        if (!linksStr) return;
+        
+        const links = linksStr.split(",").map(l => l.trim()).filter(l => l.length > 0);
+        if (links.length >= 2 && links.length <= 4) {
+          finalData.gallery = links;
+        } else {
+          alert("You must provide exactly between 2 and 4 valid links.");
+          return;
+        }
+      }
+    }
 
     try {
       await setDoc(doc(db, "events", idToSave), finalData);
@@ -92,7 +130,8 @@ export function EventManager() {
               id: "", title: "", date: "", time: "", location: "", type: "Main Event", 
               desc: "", color: "var(--accent-blue)", status: "published", 
               winner1: "", winner2: "", winner3: "", galleryLink: "",
-              isDateTBA: false, isLocationTBA: false, registrationType: "individual", minTeamSize: 2, maxTeamSize: 4
+              isDateTBA: false, isLocationTBA: false, registrationType: "individual", minTeamSize: 2, maxTeamSize: 4,
+              venue: "", duration: "4 Hours", participants: 100, registrationOpen: true, banner: "", gallery: [], highlights: [], speakers: []
             });
             setIsEditing(true);
           }}
@@ -138,23 +177,46 @@ export function EventManager() {
                   <div className="grid grid-cols-2 gap-2">
                     <input 
                       type="date"
+                      required={!formData.isDateTBA}
                       value={formData.date}
                       onChange={e => setFormData({...formData, date: e.target.value})}
                       className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
                     />
-                    <input 
-                      type="time"
-                      value={formData.time || ""}
-                      onChange={e => setFormData({...formData, time: e.target.value})}
-                      className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
-                    />
+                    <div className="flex gap-2">
+                      <select 
+                        value={formData.time?.split(':')[0] || "12"}
+                        onChange={e => {
+                          const min = formData.time?.split(':')[1] || "00";
+                          setFormData({...formData, time: `${e.target.value}:${min}`})
+                        }}
+                        className="w-1/2 rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                      >
+                        {Array.from({ length: 24 }).map((_, i) => {
+                          const hr = i.toString().padStart(2, '0');
+                          return <option key={hr} value={hr}>{hr}:00</option>
+                        })}
+                      </select>
+                      <select 
+                        value={formData.time?.split(':')[1] || "00"}
+                        onChange={e => {
+                          const hr = formData.time?.split(':')[0] || "12";
+                          setFormData({...formData, time: `${hr}:${e.target.value}`})
+                        }}
+                        className="w-1/2 rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                      >
+                        <option value="00">00</option>
+                        <option value="15">15</option>
+                        <option value="30">30</option>
+                        <option value="45">45</option>
+                      </select>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
             
             <div className="col-span-2">
-              <label className="block text-sm font-medium mb-1">Location</label>
+              <label className="block text-sm font-medium mb-1">Venue</label>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   <input type="checkbox" id="locTBA" checked={formData.isLocationTBA || false} onChange={e => setFormData({...formData, isLocationTBA: e.target.checked})} className="rounded bg-background border-border" />
@@ -162,6 +224,7 @@ export function EventManager() {
                 </div>
                 {!formData.isLocationTBA && (
                   <input 
+                    required={!formData.isLocationTBA}
                     value={formData.location || ""}
                     onChange={e => setFormData({...formData, location: e.target.value})}
                     placeholder="e.g. Auditorium, RIT"
@@ -225,6 +288,59 @@ export function EventManager() {
               </select>
             </div>
             
+            <div className="col-span-2 grid grid-cols-2 gap-4 border-t border-border/50 pt-4 mt-2">
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Duration</label>
+                <input 
+                  type="text"
+                  value={formData.duration || ""}
+                  onChange={e => setFormData({ ...formData, duration: e.target.value })}
+                  placeholder="e.g. 4 Hours"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Expected Participants</label>
+                <input 
+                  type="number"
+                  value={formData.participants || 100}
+                  onChange={e => setFormData({ ...formData, participants: parseInt(e.target.value) || 0 })}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Banner Image URL</label>
+                <input 
+                  type="text"
+                  value={formData.banner || ""}
+                  onChange={e => setFormData({ ...formData, banner: e.target.value })}
+                  placeholder="/events/default/banner.jpg"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                />
+              </div>
+              <div className="col-span-2 flex items-center gap-2 mt-2">
+                <input 
+                  type="checkbox"
+                  id="regOpen"
+                  checked={formData.registrationOpen !== false}
+                  onChange={e => setFormData({ ...formData, registrationOpen: e.target.checked })}
+                  className="h-4 w-4 rounded border-border"
+                />
+                <label htmlFor="regOpen" className="text-sm font-medium cursor-pointer">Registration Open</label>
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium mb-1">Highlights (comma separated)</label>
+                <textarea 
+                  rows={2}
+                  value={formData.highlights?.join(", ") || ""}
+                  onChange={e => setFormData({ ...formData, highlights: e.target.value.split(",").map(h => h.trim()).filter(h => h.length > 0) })}
+                  placeholder="Hands-on Workshop, Q&A Session, Certificates"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                />
+              </div>
+            </div>
+
             <div className="col-span-2 border-t border-border/50 pt-4 mt-2">
               <label className="block text-sm font-medium mb-2">Registration Type</label>
               <div className="flex gap-4">

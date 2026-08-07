@@ -33,18 +33,20 @@ export function NavBar() {
             </span>
           </Link>
           
-          <div className="h-5 sm:h-8 w-px bg-border/70 shrink-0" aria-hidden="true" />
+          <div className="h-6 sm:h-10 w-px bg-border/70 shrink-0" aria-hidden="true" />
           
           <Link href="https://ritroorkee.com" target="_blank" rel="noopener noreferrer" className="flex items-center shrink min-w-0">
-            <Image src="/rit-logo.png" alt="RIT Roorkee Logo" width={300} height={100} className="h-5 w-auto sm:h-8 object-contain" priority />
+            <Image src="/rit-logo.png" alt="RIT Roorkee Logo" width={300} height={100} className="h-7 w-auto sm:h-12 object-contain" priority />
           </Link>
         </div>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-6 lg:flex">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
+              target={link.href.startsWith("http") ? "_blank" : undefined}
+              rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
               className="text-sm text-muted transition-colors hover:text-foreground"
             >
               {link.label}
@@ -52,7 +54,7 @@ export function NavBar() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           <ThemeToggle />
           {user ? (
             <div className="flex items-center gap-4">
@@ -83,7 +85,7 @@ export function NavBar() {
           </Link>
         </div>
 
-        <div className="flex items-center gap-3 md:hidden shrink-0">
+        <div className="flex items-center gap-3 lg:hidden shrink-0">
           {user ? (
             <Link 
               href="/profile" 
@@ -116,13 +118,15 @@ export function NavBar() {
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          className="border-t border-border/70 bg-background md:hidden"
+          className="border-t border-border/70 bg-background lg:hidden"
         >
           <nav className="container-shell flex flex-col gap-1 py-4">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
+                target={link.href.startsWith("http") ? "_blank" : undefined}
+                rel={link.href.startsWith("http") ? "noopener noreferrer" : undefined}
                 onClick={() => setOpen(false)}
                 className="rounded-lg px-3 py-2.5 text-sm text-muted hover:bg-surface hover:text-foreground"
               >

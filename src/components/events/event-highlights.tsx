@@ -10,6 +10,8 @@ type EventHighlightsProps = {
 export function EventHighlights({
   highlights,
 }: EventHighlightsProps) {
+  if (!highlights || highlights.length === 0) return null;
+
   return (
     <section className="mt-20">
       <div className="mb-10">
