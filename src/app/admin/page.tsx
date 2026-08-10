@@ -79,15 +79,12 @@ export default function AdminDashboard() {
 
       const published = dbEvents.filter(e => e.status === "published");
 
-      const regsSnap = await getDocs(collection(db, "event_registrations"));
       const regCounts: Record<string, number> = {};
-      regsSnap.forEach(d => {
-        const data = d.data();
-        const eId = data.eventId;
-        if (eId) {
-          regCounts[eId] = (regCounts[eId] || 0) + 1;
-        }
-      });
+      
+      await Promise.all(published.map(async (event) => {
+        const snap = await getDocs(collection(db, "events", event.id, "registrations"));
+        regCounts[event.id] = snap.size;
+      }));
 
       setUpcomingEvents(published.map(e => ({
         ...e,

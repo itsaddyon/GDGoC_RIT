@@ -33,7 +33,7 @@ export default function AdminEventRegistrations() {
           setEventData(eventSnap.data());
         }
 
-        const q = query(collection(db, "event_registrations"), where("eventId", "==", id));
+        const q = query(collection(db, "events", id as string, "registrations"));
         const regsSnap = await getDocs(q);
         
         const regs: any[] = [];

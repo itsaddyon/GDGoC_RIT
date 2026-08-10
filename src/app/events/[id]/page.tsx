@@ -143,8 +143,10 @@ export default function EventDetailsPage() {
       async () => {
         const registrationRef = doc(
           db,
-          "event_registrations",
-          `${eventData.id}_${user.uid}`
+          "events",
+          eventData.id,
+          "registrations",
+          user.uid
         );
 
         const snapshot =
@@ -168,14 +170,13 @@ export default function EventDetailsPage() {
       setIsRegistering(true);
 
       try {
-        const registrationId =
-          `${eventData.id}_${user.uid}`;
-
         await setDoc(
           doc(
             db,
-            "event_registrations",
-            registrationId
+            "events",
+            eventData.id,
+            "registrations",
+            user.uid
           ),
           {
             eventId: eventData.id,

@@ -42,16 +42,12 @@ export default function CoreDashboard() {
           const closed = evs.filter(e => e.status === "closed");
           setClosedEvents(closed);
 
-          // Get counts for published
-          const regsSnap = await getDocs(collection(db, "event_registrations"));
+          // Then fetch counts for each event
           const regCounts: Record<string, number> = {};
-          regsSnap.docs.forEach(d => {
-            const data = d.data();
-            const eId = data.eventId;
-            if (eId) {
-              regCounts[eId] = (regCounts[eId] || 0) + 1;
-            }
-          });
+          await Promise.all(published.map(async (event) => {
+            const snap = await getDocs(collection(db, "events", event.id, "registrations"));
+            regCounts[event.id] = snap.size;
+          }));
 
           setUpcomingEvents(published.map(e => ({
             ...e,

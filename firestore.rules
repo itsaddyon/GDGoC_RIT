@@ -1,0 +1,72 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for role checks
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      // Access the role field from the users collection
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && getUserRole() == 'admin';
+    }
+    
+    function isCore() {
+      return isSignedIn() && (getUserRole() == 'core' || getUserRole() == 'admin');
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if true;
+      allow update: if isSignedIn() && request.auth.uid == userId
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']);
+      allow write: if isAdmin();
+      // Allow user creation during complete-profile
+      allow create: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Events Collection & Registration Subcollections
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isAdmin();
+      
+      match /registrations/{registrationId} {
+        // Users can read their own registrations
+        allow read: if isSignedIn() && request.auth.uid == registrationId;
+        
+        // Core and Admins can read all registrations
+        allow read: if isCore();
+        
+        // Users can create/delete their own registration
+        allow create, delete: if isSignedIn() && request.auth.uid == registrationId;
+        
+        // Admins can update/delete any registration
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // Profile Edit Requests Collection
+    match /profile_edit_requests/{requestId} {
+      allow read, create: if isSignedIn() && request.auth.uid == requestId;
+      allow read, write: if isAdmin();
+    }
+    
+    // Site Content (FAQs, etc.)
+    match /site_content/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Gallery (if separate from events)
+    match /gallery/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
