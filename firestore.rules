@@ -54,7 +54,9 @@ service cloud.firestore {
 
     // Profile Edit Requests Collection
     match /profile_edit_requests/{requestId} {
-      allow read, create: if isSignedIn() && request.auth.uid == requestId;
+      allow read: if isSignedIn() && request.auth.uid == requestId;
+      allow create: if isSignedIn() && request.auth.uid == requestId
+                    && request.resource.data.field in ['phone', 'collegeEmail', 'course', 'branch', 'year'];
       allow read, write: if isAdmin();
     }
     

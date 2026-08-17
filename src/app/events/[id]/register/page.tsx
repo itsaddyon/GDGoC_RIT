@@ -60,7 +60,7 @@ export default function EventRegistrationPage() {
   useEffect(() => {
     const checkRegistration = async () => {
       if (user && eventData) {
-        const regRef = doc(db, `registrations_${eventData.id}`, user.uid);
+        const regRef = doc(db, "events", eventData.id, "registrations", user.uid);
         const regSnap = await getDoc(regRef);
         if (regSnap.exists()) {
           setIsRegistered(true);
@@ -94,7 +94,7 @@ export default function EventRegistrationPage() {
 
     setIsRegistering(true);
     try {
-      const regRef = doc(db, `registrations_${eventData.id}`, user.uid);
+      const regRef = doc(db, "events", eventData.id, "registrations", user.uid);
       
       const regData: any = {
         eventId: eventData.id,

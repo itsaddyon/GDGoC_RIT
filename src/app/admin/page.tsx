@@ -110,6 +110,12 @@ export default function AdminDashboard() {
       const reqRef = doc(db, "profile_edit_requests", request.userId);
       
       if (action === "approve") {
+        const allowedFields = ["phone", "collegeEmail", "course", "branch", "year"];
+        if (!allowedFields.includes(request.field)) {
+          alert("Security Error: Attempted to update an unauthorized field (e.g. role). Request blocked.");
+          return;
+        }
+
         // Automatically update the user's profile with the new value
         await updateDoc(doc(db, "users", request.userId), {
           [request.field]: request.newValue
