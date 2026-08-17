@@ -75,7 +75,7 @@ export default function CompleteProfilePage() {
         course,
         branch,
         year,
-        role: "student", // default role
+        role: "member", // default role
         createdAt: new Date().toISOString()
       });
       await refreshProfile();
