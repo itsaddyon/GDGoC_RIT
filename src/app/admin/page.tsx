@@ -120,6 +120,15 @@ export default function AdminDashboard() {
         await updateDoc(doc(db, "users", request.userId), {
           [request.field]: request.newValue
         });
+
+        // If it's a safe field that public_profiles tracks, update it there too
+        const safeFields = ["course", "branch", "year"];
+        if (safeFields.includes(request.field)) {
+          await setDoc(doc(db, "public_profiles", request.userId), {
+            [request.field]: request.newValue
+          }, { merge: true });
+        }
+
         await deleteDoc(reqRef);
         alert(`Request approved. User's ${request.field} was updated to ${request.newValue}.`);
       } else {

@@ -139,7 +139,7 @@ export function TeamGrid() {
   useEffect(() => {
     const fetchSocials = async () => {
       try {
-        const q = query(collection(db, "users"), where("role", "in", ["admin", "core"]));
+        const q = query(collection(db, "public_profiles"), where("role", "in", ["admin", "core"]));
         const snap = await getDocs(q);
         const links: Record<string, any> = {};
         snap.forEach(doc => {

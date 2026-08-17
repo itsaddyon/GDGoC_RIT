@@ -63,6 +63,21 @@ export default function CompleteProfilePage() {
         role: "member", // default role
         createdAt: new Date().toISOString()
       });
+      
+      // Denormalize safe fields for public profiles (no phone/email)
+      await setDoc(doc(db, "public_profiles", user.uid), {
+        uid: user.uid,
+        name: user.displayName,
+        course,
+        branch,
+        year,
+        role: "member",
+        github: "",
+        linkedin: "",
+        twitter: "",
+        instagram: ""
+      });
+
       await refreshProfile();
       // Router will naturally push to "/" because of the useEffect above.
     } catch (error) {

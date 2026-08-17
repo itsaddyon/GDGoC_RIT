@@ -108,6 +108,9 @@ export default function ProfilePage() {
       await setDoc(doc(db, "users", user.uid), {
         coreTeamRole: e.target.value
       }, { merge: true });
+      await setDoc(doc(db, "public_profiles", user.uid), {
+        coreTeamRole: e.target.value
+      }, { merge: true });
       await refreshProfile();
     } catch (error) {
       console.error("Error saving role:", error);
@@ -130,6 +133,12 @@ export default function ProfilePage() {
     setIsSavingSocial(true);
     try {
       await setDoc(doc(db, "users", user.uid), {
+        github: github.trim(),
+        linkedin: linkedin.trim(),
+        twitter: twitter.trim(),
+        instagram: instagram.trim()
+      }, { merge: true });
+      await setDoc(doc(db, "public_profiles", user.uid), {
         github: github.trim(),
         linkedin: linkedin.trim(),
         twitter: twitter.trim(),
@@ -164,6 +173,11 @@ export default function ProfilePage() {
     setIsSavingAdminEdit(true);
     try {
       await setDoc(doc(db, "users", user.uid), adminFormData, { merge: true });
+      await setDoc(doc(db, "public_profiles", user.uid), {
+        course: adminFormData.course,
+        branch: adminFormData.branch,
+        year: adminFormData.year
+      }, { merge: true });
       await refreshProfile();
       setIsEditingAdmin(false);
       alert("Profile details updated successfully!");
