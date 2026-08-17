@@ -23,11 +23,10 @@ service cloud.firestore {
 
     // Users Collection
     match /users/{userId} {
-      allow read: if true;
+      allow read: if (isSignedIn() && request.auth.uid == userId) || (resource.data.role in ['admin', 'core']);
       allow update: if isSignedIn() && request.auth.uid == userId
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']);
       allow write: if isAdmin();
-      // Allow user creation during complete-profile, forcing role to 'member'
       allow create: if isSignedIn() 
                     && request.auth.uid == userId
                     && request.resource.data.role == 'member';

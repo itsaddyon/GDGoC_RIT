@@ -2,8 +2,13 @@ import { NextResponse } from "next/server";
 import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const authHeader = req.headers.get("authorization");
+    if (authHeader !== `Bearer ${process.env.API_SECRET_KEY}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const snap = await getDocs(collection(db, "events"));
     const events: any[] = [];
     

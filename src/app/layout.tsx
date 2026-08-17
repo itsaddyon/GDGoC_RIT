@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://gdgrit.vercel.app"),
   title: {
     default: "GDG on Campus RIT Roorkee",
     template: "%s · GDG on Campus RIT Roorkee",
@@ -26,9 +26,9 @@ export const metadata: Metadata = {
   description:
     "GDG on Campus RIT Roorkee — a student developer community at Roorkee Institute of Technology building with Google technologies.",
   icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/icon.png",
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
   },
   openGraph: {
     title: "GDG on Campus RIT Roorkee",

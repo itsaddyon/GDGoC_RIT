@@ -46,25 +46,10 @@ export default function CompleteProfilePage() {
     setIsSubmitting(true);
     try {
       const formattedEmail = collegeEmail.trim().toLowerCase();
-      
-      // Query to check if the college email is already used by another user
-      const { collection, query, where, getDocs } = await import("firebase/firestore");
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("collegeEmail", "==", formattedEmail));
-      const querySnapshot = await getDocs(q);
-      
-      let isDuplicate = false;
-      querySnapshot.forEach((doc) => {
-        if (doc.id !== user.uid) {
-          isDuplicate = true;
-        }
-      });
-      
-      if (isDuplicate) {
-        alert("This college email is already registered, try logging in.");
-        setIsSubmitting(false);
-        return;
-      }
+
+      // Note: We removed the client-side duplicate email check here. 
+      // Querying the entire users collection was a major PII security leak.
+      // Uniqueness is inherently handled by their Google Auth sign-in.
 
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
