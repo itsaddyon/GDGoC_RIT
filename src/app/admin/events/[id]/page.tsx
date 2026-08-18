@@ -21,7 +21,7 @@ export default function AdminEventRegistrations() {
   useEffect(() => {
     if (loading) return;
     
-    if (!userProfile || userProfile.role !== "admin") {
+    if (!userProfile || (userProfile.role !== "admin" && userProfile.role !== "core")) {
       router.replace("/");
       return;
     }

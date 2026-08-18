@@ -42,7 +42,7 @@ service cloud.firestore {
 
     // Events Collection & Registration Subcollections
     match /events/{eventId} {
-      allow read: if true;
+      allow read: if resource.data.status == 'published' || isCore();
       allow write: if isAdmin();
       
       match /registrations/{registrationId} {
@@ -53,7 +53,9 @@ service cloud.firestore {
         allow read: if isCore();
         
         // Users can create/delete their own registration
-        allow create, delete: if isSignedIn() && request.auth.uid == registrationId;
+        allow create: if isSignedIn() && request.auth.uid == registrationId
+                      && get(/databases/$(database)/documents/events/$(eventId)).data.status == 'published';
+        allow delete: if isSignedIn() && request.auth.uid == registrationId;
         
         // Admins can update/delete any registration
         allow update, delete: if isAdmin();
