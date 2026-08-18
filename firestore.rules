@@ -44,6 +44,7 @@ service cloud.firestore {
     match /events/{eventId} {
       allow read: if resource.data.status == 'published' || isCore();
       allow write: if isAdmin();
+      allow update: if isCore() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gallery']);
       
       match /registrations/{registrationId} {
         // Users can read their own registrations
