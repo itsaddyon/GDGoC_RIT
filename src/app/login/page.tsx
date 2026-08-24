@@ -23,7 +23,7 @@ function LoginContent() {
       if (userProfile) {
         router.push(redirectPath || "/");
       } else {
-        router.push("/complete-profile");
+        router.push(redirectPath ? `/complete-profile?redirect=${encodeURIComponent(redirectPath)}` : "/complete-profile");
       }
     }
   }, [user, userProfile, loading, router, redirectPath]);

@@ -37,7 +37,11 @@ service cloud.firestore {
     // Public Profiles Collection (Denormalized safe data)
     match /public_profiles/{userId} {
       allow read: if true;
-      allow write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow create: if (isSignedIn() && request.auth.uid == userId)
+                    && request.resource.data.role == 'member';
+      allow update: if (isSignedIn() && request.auth.uid == userId)
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']);
+      allow write: if isAdmin();
     }
 
     // Events Collection & Registration Subcollections
@@ -55,7 +59,10 @@ service cloud.firestore {
         
         // Users can create/delete their own registration
         allow create: if isSignedIn() && request.auth.uid == registrationId
-                      && get(/databases/$(database)/documents/events/$(eventId)).data.status == 'published';
+                      && get(/databases/$(database)/documents/events/$(eventId)).data.status == 'published'
+                      && get(/databases/$(database)/documents/events/$(eventId)).data.get('registrationOpen', true) == true
+                      && request.resource.data.keys().hasOnly(['eventId', 'eventTitle', 'userId', 'registeredAt', 'userProfile', 'teamName', 'teamMembers'])
+                      && (!('teamMembers' in request.resource.data) || request.resource.data.teamMembers.size() <= 10);
         allow delete: if isSignedIn() && request.auth.uid == registrationId;
         
         // Admins can update/delete any registration

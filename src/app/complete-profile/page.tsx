@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { PageHeader } from "@/components/ui/page-header";
 import { Footer } from "@/components/layout/footer";
 
-export default function CompleteProfilePage() {
+function CompleteProfileContent() {
   const { user, userProfile, loading, refreshProfile } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get("redirect");
   
   const [phone, setPhone] = useState("");
   const [collegeEmail, setCollegeEmail] = useState("");
@@ -20,13 +22,13 @@ export default function CompleteProfilePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // If they aren't logged in, send them to login.
-  // If they already have a profile, send them to home.
+  // If they already have a profile, send them to their destination.
   useEffect(() => {
     if (!loading) {
-      if (!user) router.push("/login");
-      else if (userProfile) router.push("/");
+      if (!user) router.push(redirectPath ? `/login?redirect=${encodeURIComponent(redirectPath)}` : "/login");
+      else if (userProfile) router.push(redirectPath || "/");
     }
-  }, [user, userProfile, loading, router]);
+  }, [user, userProfile, loading, router, redirectPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,5 +191,13 @@ export default function CompleteProfilePage() {
       </div>
       <Footer />
     </main>
+  );
+}
+
+export default function CompleteProfilePage() {
+  return (
+    <Suspense fallback={<main className="flex min-h-screen items-center justify-center">Loading...</main>}>
+      <CompleteProfileContent />
+    </Suspense>
   );
 }
