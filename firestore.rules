@@ -42,7 +42,7 @@ service cloud.firestore {
 
     // Events Collection & Registration Subcollections
     match /events/{eventId} {
-      allow read: if resource.data.status == 'published' || isCore();
+      allow read: if resource.data.status in ['published', 'closed'] || isCore();
       allow write: if isAdmin();
       allow update: if isCore() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gallery']);
       

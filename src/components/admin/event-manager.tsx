@@ -82,18 +82,9 @@ export function EventManager() {
     }
 
     if (finalData.status === "closed") {
-      const g = finalData.gallery || [];
-      if (g.length < 2 || g.length > 4) {
-        const linksStr = window.prompt("To close this event, please provide 2 to 4 image Drive Links (separated by commas):");
-        if (!linksStr) return;
-        
-        const links = linksStr.split(",").map(l => l.trim()).filter(l => l.length > 0);
-        if (links.length >= 2 && links.length <= 4) {
-          finalData.gallery = links;
-        } else {
-          alert("You must provide exactly between 2 and 4 valid links.");
-          return;
-        }
+      if (!finalData.galleryLink || finalData.galleryLink.trim() === "") {
+        alert("To close this event, please provide a Google Drive Link (Gallery) in the form below.");
+        return;
       }
     }
 
