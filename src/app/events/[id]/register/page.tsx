@@ -121,8 +121,7 @@ export default function EventRegistrationPage() {
 
       await setDoc(regRef, regData);
       setIsRegistered(true);
-      alert(`Successfully registered for ${eventData.title}!`);
-      router.push(`/events/${eventData.id}`);
+      // Removed the alert and push so user stays to see the nice confirmation UI below
     } catch (error) {
       console.error("Error registering:", error);
       alert("Registration failed. Please try again.");
@@ -147,8 +146,8 @@ export default function EventRegistrationPage() {
           {isRegistered ? (
             <div className="text-center py-10">
               <div className="h-20 w-20 bg-accent-green/20 text-accent-green rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">✓</div>
-              <h2 className="text-2xl font-bold mb-4">You are registered!</h2>
-              <p className="text-muted mb-8">Your spot for {eventData.title} is confirmed.</p>
+              <h2 className="text-2xl font-bold mb-4">Registration Confirmed!</h2>
+              <p className="text-muted mb-8">Hey {userProfile?.name}, your spot for {eventData.title} is secured. See you there!</p>
               <button onClick={() => router.push(`/events/${eventData.id}`)} className="rounded-full bg-foreground px-8 py-3 text-background font-medium">
                 Back to Event
               </button>

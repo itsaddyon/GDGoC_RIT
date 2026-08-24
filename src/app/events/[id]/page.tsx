@@ -158,49 +158,13 @@ export default function EventDetailsPage() {
     checkRegistration();
   }, [user, eventData]);
 
-  const handleRegister =
-    async () => {
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-
-      if (!eventData) return;
-
-      setIsRegistering(true);
-
-      try {
-        await setDoc(
-          doc(
-            db,
-            "events",
-            eventData.id,
-            "registrations",
-            user.uid
-          ),
-          {
-            eventId: eventData.id,
-
-            eventTitle:
-              eventData.title,
-
-            userId: user.uid,
-            registeredAt: new Date().toISOString(),
-            userProfile: userProfile || null,
-          }
-        );
-
-        setIsRegistered(true);
-      } catch (error) {
-        console.error(error);
-
-        alert(
-          "Unable to register for this event."
-        );
-      } finally {
-        setIsRegistering(false);
-      }
-    };
+  const handleRegister = () => {
+    if (!user) {
+      router.push(`/login?redirect=/events/${id}`);
+      return;
+    }
+    router.push(`/events/${id}/register`);
+  };
 
   const [relatedEvents, setRelatedEvents] = useState<any[]>([]);
 
@@ -324,16 +288,32 @@ export default function EventDetailsPage() {
 
         </div>
 
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText(window.location.href);
-            alert("Event link copied!");
-          }}
-          className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2 transition hover:bg-surface"
-        >
-          <Share2 size={16} />
-          Share
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              alert("Event link copied!");
+            }}
+            className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2 transition hover:bg-surface"
+          >
+            <Share2 size={16} />
+            Share
+          </button>
+          
+          {eventData.registrationOpen && (
+            <button
+              onClick={handleRegister}
+              disabled={isRegistered}
+              className={`inline-flex items-center gap-2 rounded-full px-6 py-2 text-sm font-bold transition ${
+                isRegistered 
+                  ? "bg-green-500/10 text-green-500 border border-green-500/30 cursor-not-allowed"
+                  : "bg-foreground text-background hover:scale-105"
+              }`}
+            >
+              {isRegistered ? "✓ Registered" : !user ? "Login to Register" : "Register Now"}
+            </button>
+          )}
+        </div>
 
       </section>
 
