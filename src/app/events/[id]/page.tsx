@@ -59,6 +59,7 @@ type EventData = {
 
   banner?: string;
   registrationOpen?: boolean;
+  communityLink?: string;
 };
 
 export default function EventDetailsPage() {
@@ -100,7 +101,9 @@ export default function EventDetailsPage() {
             venue: data.location || data.venue || "Seminar Hall, RIT Roorkee",
             duration: data.duration || data.time || "4 Hours",
             participants: data.participants || 180,
-            registrationOpen: data.status === "published" || data.registrationOpen || false,
+            status: data.status || "published",
+            registrationOpen: data.status === "published" && data.registrationOpen !== false,
+            communityLink: data.communityLink || "",
             isDateTBA: data.isDateTBA || false,
             isLocationTBA: data.isLocationTBA || false,
             
@@ -243,8 +246,21 @@ export default function EventDetailsPage() {
         </button>
       </section>
 
+      {/* Banner */}
+      {eventData.banner && eventData.banner !== "/events/default/banner.jpg" && (
+        <section className="container-shell pt-10 pb-4">
+          <div className="overflow-hidden rounded-[32px] border border-border">
+            <img 
+              src={eventData.banner.replace(/^\/?public\//, '/')} 
+              alt={`${eventData.title} Banner`} 
+              className="w-full max-h-[500px] object-cover" 
+            />
+          </div>
+        </section>
+      )}
+
       {/* Hero */}
-      <section className="container-shell pt-10">
+      <section className={`container-shell ${eventData.banner && eventData.banner !== "/events/default/banner.jpg" ? 'pt-2' : 'pt-10'}`}>
         <EventHero
           title={eventData.title}
           type={eventData.type}
@@ -259,16 +275,6 @@ export default function EventDetailsPage() {
           duration={eventData.duration}
           status={eventData.status}
         />
-
-        {eventData.banner && eventData.banner !== "/events/default/banner.jpg" && (
-          <div className="mt-10 overflow-hidden rounded-[32px] border border-border">
-            <img 
-              src={eventData.banner.replace(/^\/?public\//, '/')} 
-              alt={`${eventData.title} Banner`} 
-              className="w-full max-h-[500px] object-cover" 
-            />
-          </div>
-        )}
       </section>
 
       {/* Action Buttons */}
@@ -309,6 +315,15 @@ export default function EventDetailsPage() {
             <Share2 size={16} />
             Share
           </button>
+
+          {eventData.communityLink && (
+            <button
+              onClick={() => window.open(eventData.communityLink, "_blank", "noopener,noreferrer")}
+              className="inline-flex items-center gap-2 rounded-full border border-accent-blue/30 bg-accent-blue/10 px-5 py-2 text-accent-blue font-semibold transition hover:bg-accent-blue/20"
+            >
+              {eventData.status === "closed" ? "View on GDG Community" : "RSVP Here"}
+            </button>
+          )}
           
           {eventData.registrationOpen && (
             <button

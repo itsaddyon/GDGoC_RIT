@@ -123,10 +123,19 @@ export function PastEvents() {
               {/* Gallery Link */}
               {event.galleryLink && (
                 <div className="mt-6 pt-6 border-t border-border/50 relative">
-                  <a href={event.galleryLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:text-accent-blue text-muted" onClick={(e) => e.stopPropagation()}>
+                  <div 
+                    role="button"
+                    tabIndex={0}
+                    className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:text-accent-blue text-muted cursor-pointer" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      window.open(event.galleryLink, '_blank', 'noopener,noreferrer');
+                    }}
+                  >
                     <ImageIcon size={16} />
                     View Event Photos
-                  </a>
+                  </div>
                 </div>
               )}
               </motion.div>

@@ -31,6 +31,7 @@ type EventType = {
   registrationType?: "individual" | "team";
   minTeamSize?: number;
   maxTeamSize?: number;
+  communityLink?: string;
 };
 
 export function EventManager() {
@@ -122,7 +123,7 @@ export function EventManager() {
               desc: "", color: "var(--accent-blue)", status: "published", 
               winner1: "", winner2: "", winner3: "", galleryLink: "",
               isDateTBA: false, isLocationTBA: false, registrationType: "individual", minTeamSize: 2, maxTeamSize: 4,
-              venue: "", duration: "4 Hours", participants: 100, registrationOpen: true, banner: "", gallery: [], highlights: [], speakers: []
+              venue: "", duration: "4 Hours", participants: 100, registrationOpen: true, banner: "", gallery: [], highlights: [], speakers: [], communityLink: ""
             });
             setIsEditing(true);
           }}
@@ -307,6 +308,16 @@ export function EventManager() {
                   value={formData.banner || ""}
                   onChange={e => setFormData({ ...formData, banner: e.target.value })}
                   placeholder="/events/default/banner.jpg"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Community RSVP Link (Optional)</label>
+                <input 
+                  type="url"
+                  value={formData.communityLink || ""}
+                  onChange={e => setFormData({ ...formData, communityLink: e.target.value })}
+                  placeholder="https://gdg.community.dev/..."
                   className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm focus:outline-none"
                 />
               </div>
