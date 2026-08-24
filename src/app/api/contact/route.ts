@@ -6,17 +6,7 @@ const RATE_LIMIT_WINDOW = 60 * 1000;
 
 export async function POST(req: Request) {
   try {
-    const origin = req.headers.get("origin") || "";
-    const referer = req.headers.get("referer") || "";
-    const isValidOrigin = 
-      origin.includes("gdgrit.vercel.app") || 
-      referer.includes("gdgrit.vercel.app") ||
-      origin.includes("localhost") || 
-      referer.includes("localhost");
-
-    if (!isValidOrigin) {
-      return NextResponse.json({ error: "Unauthorized origin" }, { status: 403 });
-    }
+    // Origin check removed as it can be spoofed and provides no real security boundary for public APIs.
 
     const ip = req.headers.get("x-forwarded-for") || "unknown-ip";
     const now = Date.now();
@@ -38,6 +28,10 @@ export async function POST(req: Request) {
 
     if (!name || !email || !phone || !message) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    if (name.length > 100 || email.length > 150 || phone.length > 20) {
+      return NextResponse.json({ error: "Input fields exceed maximum allowed length" }, { status: 400 });
     }
 
     if (message.length > 1000) {

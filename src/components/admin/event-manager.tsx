@@ -69,7 +69,7 @@ export function EventManager() {
     if (!formData || !formData.id) return;
     
     // Auto-generate ID if it's new and doesn't have one
-    const idToSave = formData.id.trim().toLowerCase().replace(/\s+/g, '-');
+    const idToSave = formData.id.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     const finalData = { ...formData, id: idToSave };
 
     if (!finalData.isDateTBA && !finalData.date) {
