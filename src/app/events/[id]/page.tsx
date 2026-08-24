@@ -263,7 +263,7 @@ export default function EventDetailsPage() {
         {eventData.banner && eventData.banner !== "/events/default/banner.jpg" && (
           <div className="mt-10 overflow-hidden rounded-[32px] border border-border">
             <img 
-              src={eventData.banner} 
+              src={eventData.banner.replace(/^\/?public\//, '/')} 
               alt={`${eventData.title} Banner`} 
               className="w-full max-h-[500px] object-cover" 
             />
