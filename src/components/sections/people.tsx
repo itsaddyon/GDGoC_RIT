@@ -61,7 +61,7 @@ const CURRENT_TEAM = [
   {
     id: "9", name: "Amit Raj", role: "Graphic Lead",
     course: "B.Tech", year: "3rd Year", accent: "var(--accent-yellow)",
-    github: "https://github.com/raajamit10", linkedin: "https://www.linkedin.com/in/amit-raj-078b37324/", image: "/team/amit-raj.jpeg"
+    github: "https://github.com/raajamit10", linkedin: "https://www.linkedin.com/in/amit-raj-078b37324/", image: "/team/amit-raj.png"
   },
   // 2nd Years
   {

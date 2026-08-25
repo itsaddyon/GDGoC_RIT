@@ -70,7 +70,7 @@ const TEAM_DATA: TeamMember[] = [
   },
   {
     id: "9", name: "Amit Raj", role: "Graphic Lead", category: "current", domain: "Design",
-    img: "/team/amit-raj.jpeg", socials: { github: "https://github.com/raajamit10", linkedin: "https://www.linkedin.com/in/amit-raj-078b37324/" }
+    img: "/team/amit-raj.png", socials: { github: "https://github.com/raajamit10", linkedin: "https://www.linkedin.com/in/amit-raj-078b37324/" }
   },
   // Current Team - 2nd Years
   {
