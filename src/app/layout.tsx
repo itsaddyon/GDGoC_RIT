@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { SiteCursor } from "@/components/layout/site-cursor";
 import { NetworkCanvas } from "@/components/illustrations/network-canvas";
 import { ConditionalNav } from "@/components/layout/conditional-nav";
+import { Analytics } from "@vercel/analytics/react";
 
 const outfitFont = Outfit({
   variable: "--font-outfit",
@@ -59,6 +60,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <SiteCursor />
             <ConditionalNav />
             {children}
+            <Analytics />
           </ThemeProvider>
         </AuthProvider>
       </body>
