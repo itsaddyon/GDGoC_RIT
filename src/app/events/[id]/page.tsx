@@ -325,7 +325,7 @@ export default function EventDetailsPage() {
             </button>
           )}
           
-          {eventData.registrationOpen && (
+          {id !== "fetchathonsession" && eventData.registrationOpen && (
             <button
               onClick={handleRegister}
               disabled={isRegistered}
