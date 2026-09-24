@@ -54,28 +54,57 @@ export default function CoreEventRegistrations() {
   const exportToCSV = () => {
     if (registrations.length === 0) return;
     
-    const headers = ["Name", "Email", "Phone", "Course", "Branch", "Year", "Registered At"];
-    const csvRows = [headers.join(",")];
-    
-    registrations.forEach(reg => {
-      const p = reg.userProfile || {};
-      const row = [
-        `"${p.name || ""}"`,
-        `"${p.email || ""}"`,
-        `"${p.phone || ""}"`,
-        `"${p.course || ""}"`,
-        `"${p.branch || ""}"`,
-        `"${p.year || ""}"`,
-        `"${new Date(reg.registeredAt).toLocaleString()}"`
-      ];
-      csvRows.push(row.join(","));
-    });
+    if (eventData?.registrationType === "team") {
+      const headers = ["Team Name", "Role", "Name", "Email", "College Email", "Phone", "Course", "Branch", "Year", "Registered At"];
+      const csvRows = [headers.join(",")];
+      
+      registrations.forEach(reg => {
+        reg.teamMembers?.forEach((m: any, idx: number) => {
+          const row = [
+            `"${reg.teamName || ""}"`,
+            `"${idx === 0 ? "Leader" : "Member"}"`,
+            `"${m.name || ""}"`,
+            `"${m.email || ""}"`,
+            `"${m.collegeEmail || ""}"`,
+            `"${m.phone || ""}"`,
+            `"${m.course || ""}"`,
+            `"${m.branch || ""}"`,
+            `"${m.year || ""}"`,
+            `"${new Date(reg.registeredAt).toLocaleString()}"`
+          ];
+          csvRows.push(row.join(","));
+        });
+      });
 
+      downloadCSV(csvRows, `team_registrations_${id}.csv`);
+    } else {
+      const headers = ["Name", "Email", "Phone", "Course", "Branch", "Year", "Registered At"];
+      const csvRows = [headers.join(",")];
+      
+      registrations.forEach(reg => {
+        const p = reg.userProfile || {};
+        const row = [
+          `"${p.name || ""}"`,
+          `"${p.email || ""}"`,
+          `"${p.phone || ""}"`,
+          `"${p.course || ""}"`,
+          `"${p.branch || ""}"`,
+          `"${p.year || ""}"`,
+          `"${new Date(reg.registeredAt).toLocaleString()}"`
+        ];
+        csvRows.push(row.join(","));
+      });
+
+      downloadCSV(csvRows, `registrations_${id}.csv`);
+    }
+  };
+
+  const downloadCSV = (csvRows: string[], filename: string) => {
     const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `registrations_${id}.csv`);
+    link.setAttribute("download", filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -124,28 +153,65 @@ export default function CoreEventRegistrations() {
               <table className="w-full text-left text-sm">
                 <thead className="bg-surface-raised/50 text-xs uppercase text-muted">
                   <tr>
-                    <th className="px-6 py-4 font-medium">Student Name</th>
-                    <th className="px-6 py-4 font-medium">Contact</th>
-                    <th className="px-6 py-4 font-medium">Education</th>
-                    <th className="px-6 py-4 font-medium">Registered At</th>
+                    {eventData?.registrationType === "team" ? (
+                      <>
+                        <th className="px-6 py-4 font-medium">Team Name</th>
+                        <th className="px-6 py-4 font-medium">Leader Name</th>
+                        <th className="px-6 py-4 font-medium">Contact</th>
+                        <th className="px-6 py-4 font-medium">Members</th>
+                        <th className="px-6 py-4 font-medium">Registered At</th>
+                      </>
+                    ) : (
+                      <>
+                        <th className="px-6 py-4 font-medium">Student Name</th>
+                        <th className="px-6 py-4 font-medium">Contact</th>
+                        <th className="px-6 py-4 font-medium">Education</th>
+                        <th className="px-6 py-4 font-medium">Registered At</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/30">
                   {registrations.map((reg, i) => (
                     <tr key={i} className="hover:bg-surface/80 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-foreground">{reg.userProfile?.name || "Unknown"}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-xs text-muted mb-1">{reg.userProfile?.email || "No Email"}</div>
-                        <div className="text-xs">{reg.userProfile?.phone || "No Phone"}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-foreground text-xs">{reg.userProfile?.course} {reg.userProfile?.branch} • {reg.userProfile?.year}</div>
-                      </td>
-                      <td className="px-6 py-4 text-xs text-muted">
-                        {new Date(reg.registeredAt).toLocaleString()}
-                      </td>
+                      {eventData?.registrationType === "team" ? (
+                        <>
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-accent-blue">{reg.teamName || "Unknown"}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="font-medium text-foreground">{reg.teamMembers?.[0]?.name || "Unknown"}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-xs text-muted mb-1">{reg.teamMembers?.[0]?.email || "No Email"}</div>
+                            <div className="text-xs">{reg.teamMembers?.[0]?.phone || "No Phone"}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="inline-flex items-center justify-center rounded-full bg-accent-red/10 text-accent-red px-2.5 py-0.5 text-xs font-medium">
+                              {reg.teamMembers?.length || 0} Members
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-xs text-muted">
+                            {new Date(reg.registeredAt).toLocaleString()}
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-6 py-4">
+                            <div className="font-medium text-foreground">{reg.userProfile?.name || "Unknown"}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-xs text-muted mb-1">{reg.userProfile?.email || "No Email"}</div>
+                            <div className="text-xs">{reg.userProfile?.phone || "No Phone"}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-foreground text-xs">{reg.userProfile?.course} {reg.userProfile?.branch} • {reg.userProfile?.year}</div>
+                          </td>
+                          <td className="px-6 py-4 text-xs text-muted">
+                            {new Date(reg.registeredAt).toLocaleString()}
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>

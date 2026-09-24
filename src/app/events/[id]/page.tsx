@@ -306,9 +306,21 @@ export default function EventDetailsPage() {
 
         <div className="flex gap-2">
           <button
-            onClick={() => {
-              navigator.clipboard.writeText(window.location.href);
-              alert("Event link copied!");
+            onClick={async () => {
+              if (navigator.share) {
+                try {
+                  await navigator.share({
+                    title: eventData.title,
+                    text: `Check out ${eventData.title} at GDG on Campus RIT!`,
+                    url: window.location.href,
+                  });
+                } catch (err) {
+                  console.log("Share dismissed");
+                }
+              } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert("Event link copied to clipboard!");
+              }
             }}
             className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2 transition hover:bg-surface"
           >
@@ -378,6 +390,7 @@ export default function EventDetailsPage() {
   isRegistering={isRegistering}
   isLoggedIn={!!user}
   registrationOpen={eventData.registrationOpen ?? false}
+  communityLink={eventData.communityLink}
   userProfile={userProfile}
   onRegister={handleRegister}
 />

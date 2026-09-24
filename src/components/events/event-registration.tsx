@@ -10,6 +10,7 @@ type EventRegistrationProps = {
   isRegistering: boolean;
   isLoggedIn: boolean;
   registrationOpen: boolean;
+  communityLink?: string;
   userProfile?: any;
   onRegister: () => void;
 };
@@ -19,6 +20,7 @@ export function EventRegistration({
   isRegistering,
   isLoggedIn,
   registrationOpen,
+  communityLink,
   userProfile,
   onRegister,
 }: EventRegistrationProps) {
@@ -47,12 +49,21 @@ export function EventRegistration({
       <div className="flex flex-col gap-8 p-8 md:flex-row md:items-start md:justify-between md:p-12">
         <div className="flex-1">
           <span className="text-sm font-semibold uppercase tracking-widest text-accent-blue">
-            Registration
+            {!registrationOpen && communityLink ? "External RSVP" : "Registration"}
           </span>
-          <h2 className="mt-3 text-3xl font-bold">Join this Event</h2>
+          <h2 className="mt-3 text-3xl font-bold">
+            {!registrationOpen && communityLink 
+              ? "RSVP on GDG Community" 
+              : !registrationOpen 
+                ? "Registration Closed" 
+                : "Join this Event"}
+          </h2>
           <p className="mt-3 max-w-xl text-muted">
-            Register now to secure your seat. You'll receive event updates,
-            reminders, and participation details before the event begins.
+            {!registrationOpen && communityLink
+              ? "This event requires you to RSVP through the official GDG Community platform to secure your spot."
+              : !registrationOpen
+                ? "Registrations for this event are currently closed. Stay tuned for future events!"
+                : "Register now to secure your seat. You'll receive event updates, reminders, and participation details before the event begins."}
           </p>
         </div>
 
@@ -65,6 +76,13 @@ export function EventRegistration({
               </div>
               <p className="text-sm text-muted">See you at the event 🚀</p>
             </div>
+          ) : !registrationOpen && communityLink ? (
+            <button
+              onClick={() => window.open(communityLink, "_blank", "noopener,noreferrer")}
+              className="rounded-full bg-accent-blue px-8 py-4 text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95"
+            >
+              RSVP Here
+            </button>
           ) : !registrationOpen ? (
             <div className="flex flex-col items-end gap-2">
               <div className="flex items-center gap-2 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-5 py-3 font-semibold text-yellow-400">
