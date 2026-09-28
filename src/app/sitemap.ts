@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next'
-import { getDocs, collection } from "firebase/firestore";
+import { getDocs, collection, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -22,7 +22,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Fetch dynamic events
   try {
-    const snap = await getDocs(collection(db, "events"));
+    const eventsRef = collection(db, "events");
+    const q = query(eventsRef, where("status", "in", ["published", "closed"]));
+    const snap = await getDocs(q);
     const eventRoutes = snap.docs.map((doc) => ({
       url: `${baseUrl}/events/${doc.id}`,
       lastModified: new Date(),

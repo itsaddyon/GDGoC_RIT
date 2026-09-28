@@ -35,6 +35,9 @@ export const metadata: Metadata = {
     "Roorkee Institute of Technology tech club",
     "RIT Roorkee coding community",
     "GDG Roorkee",
+    "Roorkee Institute of Technology",
+    "RIT Roorkee",
+    "google developer group roorkee",
   ],
   icons: {
     icon: "/favicon.ico",
