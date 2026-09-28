@@ -40,10 +40,6 @@ function CompleteProfileContent() {
       return;
     }
 
-    if (!collegeEmail.trim().toLowerCase().endsWith("@ritroorkee.com")) {
-      alert("College Email must end with @ritroorkee.com");
-      return;
-    }
 
     setIsSubmitting(true);
     try {
@@ -127,10 +123,10 @@ function CompleteProfileContent() {
               required
               value={collegeEmail}
               onChange={e => setCollegeEmail(e.target.value)}
-              placeholder="e.g. student@ritroorkee.com" 
+              placeholder="e.g. student@college.edu" 
               className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:border-accent-blue focus:outline-none"
             />
-            <p className="text-xs text-muted mt-1">Must end with @ritroorkee.com</p>
+            <p className="text-xs text-muted mt-1">Use your college mail.</p>
           </div>
 
           <div className="mb-5">
