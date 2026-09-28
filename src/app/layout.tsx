@@ -26,6 +26,16 @@ export const metadata: Metadata = {
   },
   description:
     "GDG on Campus RIT Roorkee — a student developer community at Roorkee Institute of Technology building with Google technologies.",
+  keywords: [
+    "GDG RIT",
+    "GDG RIT Roorkee",
+    "GDGoC RIT",
+    "GDG on Campus RIT",
+    "Google Developer Groups RIT Roorkee",
+    "Roorkee Institute of Technology tech club",
+    "RIT Roorkee coding community",
+    "GDG Roorkee",
+  ],
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
@@ -42,6 +52,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "GDG on Campus RIT Roorkee",
     description: "A student developer community at Roorkee Institute of Technology building with Google technologies.",
+  },
+  verification: {
+    google: "oh_uSOyMEC8yG2gU82a9Sep37gyfR-IkgHBOUJK6AQg",
   },
 };
 
